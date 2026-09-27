@@ -1,5 +1,7 @@
 import { msToWpm } from '../engine/typing'
 import { useT } from '../i18n'
+import type { Badge } from '../rewards/badges'
+import { useApp } from '../store/app'
 
 export interface RoundResult {
   wpm: number
@@ -10,10 +12,12 @@ export interface RoundResult {
   goalJustDone: boolean
   streak: number
   levelUp: string | null
+  badges: Badge[]
 }
 
 export function ResultCard({ result, onNext }: { result: RoundResult; onNext: () => void }) {
   const t = useT()
+  const lang = useApp((s) => s.shared.settings.lang)
   const show = (ch: string) => (ch === ' ' ? t.space : ch)
   return (
     <div className="rounded-2xl bg-white/85 backdrop-blur shadow-lg p-8 text-center space-y-6">
@@ -35,6 +39,19 @@ export function ResultCard({ result, onNext }: { result: RoundResult; onNext: ()
         <div className="rounded-xl bg-emerald-500 text-white py-3 text-xl font-bold">
           {t.goalJustDone}
           {result.streak > 1 && <div className="text-base font-medium mt-1">{t.goalStreakNote(result.streak)}</div>}
+        </div>
+      )}
+      {result.badges.length > 0 && (
+        <div className="rounded-xl bg-gradient-to-r from-theme-400 to-theme-600 text-white py-3 px-4">
+          <div className="text-lg font-bold mb-2">{t.newBadges}</div>
+          <div className="flex flex-wrap justify-center gap-4">
+            {result.badges.map((b, i) => (
+              <div key={b.id} className="flex flex-col items-center animate-[pop_400ms_ease-out_both]" style={{ animationDelay: `${300 + i * 150}ms` }}>
+                <span className="text-4xl drop-shadow">{b.icon}</span>
+                <span className="text-sm font-semibold">{b.name[lang]}</span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
       {result.levelUp && (

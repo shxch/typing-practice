@@ -9,6 +9,7 @@ import { useT } from '../i18n'
 import { UNITS, computeProgress, type Progress } from '../lessons/curriculum'
 import { generateLesson } from '../lessons/generate'
 import { dayKey } from '../lessons/stats'
+import { computeBadges, newBadges } from '../rewards/badges'
 import { levelOf, minutesOn, starsFor, streak, totalStars } from '../rewards/rewards'
 import { playCorrect, playDelete, playError, playFinish, playUnlock } from '../sound/sound'
 import { useApp } from '../store/app'
@@ -90,7 +91,12 @@ export function Practice() {
       const levelBefore = levelOf(totalStars(sessionList, settings)).level
       const levelAfter = levelOf(totalStars(after, settings)).level
       const goalJustDone = minutesOn(sessionList, today) < goal && minutesOn(after, today) >= goal
-      const newKeys = [...computeProgress(after, settings).unlocked].filter((c) => !progress.unlocked.has(c))
+      const afterProgress = computeProgress(after, settings)
+      const newKeys = [...afterProgress.unlocked].filter((c) => !progress.unlocked.has(c))
+      const badges = newBadges(
+        computeBadges(sessionList, settings, progress.unlockedUnits),
+        computeBadges(after, settings, afterProgress.unlockedUnits),
+      )
 
       addSession(session)
       setInProgress(null)
@@ -103,9 +109,10 @@ export function Practice() {
         goalJustDone,
         streak: streak(after, goal),
         levelUp: levelAfter > levelBefore ? t.levels[Math.min(levelAfter, t.levels.length - 1)] : null,
+        badges,
       })
       playFinish()
-      if (newKeys.length > 0 || goalJustDone || levelAfter > levelBefore) playUnlock()
+      if (newKeys.length > 0 || goalJustDone || levelAfter > levelBefore || badges.length > 0) playUnlock()
       void syncNow()
     },
     [progress, device, addSession, setInProgress, sessionList, settings, t],

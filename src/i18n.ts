@@ -66,6 +66,11 @@ const zh = {
   showKeys: '展开按键统计',
 
   navStats: '统计',
+  navBadges: '徽章',
+  badgesEarned: (n: number, total: number) => `已获得 ${n} / ${total} 枚徽章`,
+  badgesHint: '把鼠标放到徽章上可以看说明，灰色的还没拿到，进度条显示还差多少。',
+  badgeGroups: { rounds: '练习轮数', speed: '速度', accuracy: '准确', streak: '每日坚持', stars: '三颗星', time: '练习时长', keys: '解锁与探索' },
+  newBadges: '🏅 获得新徽章！',
   allTime: '全部',
   timeLabel: '练习时间',
   lessonsLabel: '练习轮数',
@@ -225,6 +230,11 @@ const en: Dict = {
   showKeys: 'Show key stats',
 
   navStats: 'Stats',
+  navBadges: 'Badges',
+  badgesEarned: (n, total) => `${n} of ${total} badges earned`,
+  badgesHint: 'Hover a badge for details. Grey ones are still to earn; the bar shows how close you are.',
+  badgeGroups: { rounds: 'Rounds', speed: 'Speed', accuracy: 'Accuracy', streak: 'Daily streak', stars: 'Three stars', time: 'Practice time', keys: 'Unlocks & more' },
+  newBadges: '🏅 New badge!',
   allTime: 'All time',
   timeLabel: 'Time',
   lessonsLabel: 'Rounds',

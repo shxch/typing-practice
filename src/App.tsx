@@ -7,12 +7,13 @@ import { useT } from './i18n'
 import { Practice } from './pages/Practice'
 import { Settings } from './pages/Settings'
 import { Stats } from './pages/Stats'
+import { Badges } from './pages/Badges'
 import { setVolume } from './sound/sound'
 import { hasLocalChanges, useApp } from './store/app'
 import { syncNow } from './sync/runner'
 import { useWallpaperTheme } from './theme/useTheme'
 
-type Page = 'practice' | 'stats' | 'settings'
+type Page = 'practice' | 'stats' | 'badges' | 'settings'
 
 /** Keep this device and the data repo in step: on open, on focus/blur, when back online, and periodically. */
 function useAutoSync() {
@@ -85,6 +86,7 @@ export default function App() {
           <nav className="flex items-center gap-2">
             {tab('practice', t.navPractice)}
             {tab('stats', t.navStats)}
+            {tab('badges', t.navBadges)}
             {tab('settings', t.navSettings)}
             <button
               onClick={blurAfter(() => updateSettings({ lang: lang === 'zh' ? 'en' : 'zh' }))}
@@ -98,7 +100,7 @@ export default function App() {
           </nav>
         </header>
       </div>
-      <main className="max-w-5xl mx-auto px-6 pt-5 pb-12">{page === 'practice' ? <Practice /> : page === 'stats' ? <Stats /> : <Settings />}</main>
+      <main className="max-w-5xl mx-auto px-6 pt-5 pb-12">{page === 'practice' ? <Practice /> : page === 'stats' ? <Stats /> : page === 'badges' ? <Badges /> : <Settings />}</main>
     </div>
   )
 }
