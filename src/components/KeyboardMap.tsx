@@ -1,4 +1,5 @@
 import { msToWpm } from '../engine/typing'
+import { useT } from '../i18n'
 import type { Progress } from '../lessons/curriculum'
 
 interface KeyDef {
@@ -35,19 +36,20 @@ const ROWS: KeyDef[][] = [
 // Row indents, in key widths, like a real staggered keyboard.
 const OFFSETS = [0, 0.5, 0.8, 1.3]
 
-function tooltip(chars: string[], p: Progress): string {
+function tooltip(chars: string[], p: Progress, t: ReturnType<typeof useT>): string {
   return chars
     .filter((c) => p.unlocked.has(c))
     .map((c) => {
       const k = p.keys[c]
-      if (!k || k.ms === null) return `${c}：还没有练习`
-      return `${c}：${Math.round(msToWpm(k.ms))} WPM，准确率 ${Math.round((k.acc ?? 0) * 100)}%`
+      if (!k || k.ms === null) return `${c}: ${t.notPracticed}`
+      return t.keyTooltip(c, Math.round(msToWpm(k.ms)), Math.round((k.acc ?? 0) * 100))
     })
     .join('\n')
 }
 
 /** Shows which keys are unlocked, which are weak, and the current focus key. No finger hints. */
 export function KeyboardMap({ progress }: { progress: Progress }) {
+  const t = useT()
   return (
     <div className="flex flex-col gap-1.5 items-start [--k:clamp(1.75rem,5.4vw,2.75rem)]">
       {ROWS.map((row, r) => (
@@ -63,7 +65,7 @@ export function KeyboardMap({ progress }: { progress: Progress }) {
             return (
               <div
                 key={k.label}
-                title={tooltip(k.chars, progress)}
+                title={tooltip(k.chars, progress, t)}
                 className={`relative w-(--k) h-(--k) text-[calc(var(--k)*0.36)] rounded-lg border flex items-center justify-center font-semibold ${cls}`}
               >
                 {k.shiftLabel && <span className="absolute top-0.5 left-1.5 text-[10px] opacity-70">{k.shiftLabel}</span>}
@@ -75,7 +77,7 @@ export function KeyboardMap({ progress }: { progress: Progress }) {
       ))}
       <div
         className="mt-0.5 h-[calc(var(--k)*0.8)] w-[calc(var(--k)*6.5)] ml-[calc(var(--k)*2.6)] rounded-lg border border-slate-300 bg-white shadow-sm"
-        title="空格"
+        title={t.space}
       />
     </div>
   )

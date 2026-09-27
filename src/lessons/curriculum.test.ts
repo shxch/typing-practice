@@ -55,6 +55,24 @@ describe('curriculum', () => {
     expect(computeProgress([b, a], settings).unlockedUnits).toBe(computeProgress([a, b], settings).unlockedUnits)
   })
 
+  it('focuses on a weak key from an earlier stage', () => {
+    const fast = 60000 / (25 * 5)
+    const slow = 60000 / (10 * 5)
+    const letters = UNITS.filter((u) => u.stage === 'A').flatMap((u) => u.chars)
+    const good = session(1, [...letters, ...'ASDFJKLE'], fast)
+    const qSlipped = session(2, ['q'], slow)
+    const p = computeProgress([good, qSlipped], { ...settings, manualUnits: 20 })
+    expect(p.stage).toBe('B')
+    expect(p.focus).toBe('q')
+  })
+
+  it('keeps a focus key even when everything is on target', () => {
+    const fast = 60000 / (25 * 5)
+    const p = computeProgress([session(1, UNITS[0].chars, fast)], { ...settings, manualUnits: 1 })
+    expect(p.weak).toEqual([])
+    expect(p.focus).not.toBeNull()
+  })
+
   it('honours the manual override', () => {
     const p = computeProgress([], { ...settings, manualUnits: 20 })
     expect(p.stage).toBe('B')

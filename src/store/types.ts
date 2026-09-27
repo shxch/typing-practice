@@ -33,7 +33,12 @@ export interface SyncedSettings {
   manualUnits: number | null
   lessonWords: number
   errorMode: ErrorMode
+  lang: Lang
+  /** Wallpaper id (see content/wallpapers.ts). */
+  wallpaper: string
 }
+
+export type Lang = 'zh' | 'en'
 
 export const DEFAULT_SETTINGS: SyncedSettings = {
   targetWpm: 25,
@@ -42,6 +47,8 @@ export const DEFAULT_SETTINGS: SyncedSettings = {
   manualUnits: null,
   lessonWords: 20,
   errorMode: 'stop',
+  lang: 'zh',
+  wallpaper: 'gradient-lavender',
 }
 
 /** The small, frequently-changing part of the synced data (state.json). */

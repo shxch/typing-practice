@@ -33,6 +33,12 @@ export interface TypingState {
   typed: string[]
   /** Positions that had at least one wrong press. */
   missed: boolean[]
+  /**
+   * Positions whose correct press was timed (not the very first key, not after a break).
+   * WPM counts only these, so characters and time always match up.
+   * Optional because lessons saved before this field existed don't have it.
+   */
+  timed?: boolean[]
   keyStats: KeyStats
   presses: number
   correctPresses: number
@@ -54,6 +60,7 @@ export function createState(text: string, mode: ErrorMode): TypingState {
     marks: Array.from(text, () => 'pending' as Mark),
     typed: [],
     missed: Array.from(text, () => false),
+    timed: Array.from(text, () => false),
     keyStats: {},
     presses: 0,
     correctPresses: 0,
@@ -86,6 +93,13 @@ function hit(timed: boolean, clean: boolean, gap: number | null): Partial<KeySta
   return timed && clean ? { n: 1, t: 1, ms: gap! } : { n: 1 }
 }
 
+function markTimed(state: TypingState, timed: boolean): boolean[] | undefined {
+  if (!state.timed) return undefined
+  const out = state.timed.slice()
+  out[state.pos] = timed
+  return out
+}
+
 /** Handle a printable character. `now` is a millisecond timestamp. */
 export function typeChar(state: TypingState, ch: string, now: number): TypingState {
   if (state.done || ch.length !== 1) return state
@@ -112,6 +126,7 @@ export function typeChar(state: TypingState, ch: string, now: number): TypingSta
       marks,
       typed,
       pos,
+      timed: markTimed(state, timed),
       correctPresses: state.correctPresses + 1,
       keyStats: bump(state.keyStats, expected, hit(timed, !state.missed[state.pos], gap)),
       done: pos >= state.text.length,
@@ -130,6 +145,7 @@ export function typeChar(state: TypingState, ch: string, now: number): TypingSta
     missed,
     typed: state.typed.concat(ch),
     pos,
+    timed: markTimed(state, correct && timed),
     correctPresses: state.correctPresses + (correct ? 1 : 0),
     keyStats: correct
       ? bump(state.keyStats, expected, hit(timed, !state.missed[state.pos], gap))
@@ -143,13 +159,24 @@ export function backspace(state: TypingState): TypingState {
   const pos = state.pos - 1
   const marks = state.marks.slice()
   marks[pos] = 'pending'
-  return { ...state, pos, marks, typed: state.typed.slice(0, pos) }
+  const timed = state.timed?.slice()
+  if (timed) timed[pos] = false
+  return { ...state, pos, marks, timed, typed: state.typed.slice(0, pos) }
 }
 
-/** Words per minute over correctly typed characters (5 chars = 1 word). */
-export function wpm(state: Pick<TypingState, 'marks' | 'elapsedMs'>): number {
+/**
+ * Words per minute (5 characters = 1 word).
+ *
+ * Only correct characters whose time was measured are counted, over exactly the time
+ * measured. The first key of a round has no "previous key" to time from, and the key
+ * after a long break has its break excluded, so neither is counted — otherwise the
+ * characters outnumber the time and the speed comes out too high, especially early on
+ * (two keys 0.1s apart used to read as 240 WPM). Time spent on wrong presses is included,
+ * so mistakes do lower the speed.
+ */
+export function wpm(state: Pick<TypingState, 'marks' | 'elapsedMs' | 'timed'>): number {
   if (state.elapsedMs <= 0) return 0
-  const correct = state.marks.filter((m) => m === 'ok' || m === 'fixed').length
+  const correct = state.marks.filter((m, i) => (m === 'ok' || m === 'fixed') && (state.timed?.[i] ?? i > 0)).length
   return correct / 5 / (state.elapsedMs / 60000)
 }
 

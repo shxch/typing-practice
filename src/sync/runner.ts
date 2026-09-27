@@ -1,5 +1,6 @@
 // Connects syncOnce to the store: one sync at a time, triggered by app events.
 
+import { t } from '../i18n'
 import { isConfigured, useApp } from '../store/app'
 import { GitHubClient, GitHubError } from './github'
 import { mergeSessions, mergeShared, monthOf } from './merge'
@@ -71,11 +72,10 @@ async function runOnce() {
     })
   } catch (e) {
     if (e instanceof GitHubError) {
-      const msg =
-        e.status === 401 ? 'Token 无效或已过期' : e.status === 403 ? 'Token 没有写入权限' : `GitHub 错误：${e.message}`
+      const msg = e.status === 401 ? t().errTokenInvalid : e.status === 403 ? t().errTokenNoWrite : t().errGitHub(e.message)
       useApp.setState({ status: 'error', statusMessage: msg })
     } else {
-      useApp.setState({ status: 'offline', statusMessage: '网络不可用，联网后会自动同步' })
+      useApp.setState({ status: 'offline', statusMessage: t().errOffline })
     }
   }
 }

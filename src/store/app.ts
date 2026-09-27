@@ -11,6 +11,9 @@ export interface LocalConfig {
   repo: string
   token: string
   device: string
+  /** Sound is per device: the TV and the laptop have very different speakers. */
+  sound: boolean
+  volume: number
 }
 
 interface AppState {
@@ -54,7 +57,7 @@ export const useApp = create<AppState>()(
         inProgress: null,
         inProgressUpdatedAt: 0,
       },
-      config: { owner: 'shxch', repo: 'typing-data', token: '', device: guessDevice() },
+      config: { owner: 'shxch', repo: 'typing-data', token: '', device: guessDevice(), sound: true, volume: 0.6 },
       shas: {},
       dirtyMonths: [],
       remoteStamp: { settings: 0, inProgress: 0 },
@@ -100,6 +103,7 @@ export const useApp = create<AppState>()(
         return {
           ...current,
           ...p,
+          config: { ...current.config, ...p.config },
           // New settings fields get defaults when loading older data.
           shared: p.shared
             ? { ...p.shared, settings: { ...DEFAULT_SETTINGS, ...p.shared.settings } }

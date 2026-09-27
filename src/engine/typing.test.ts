@@ -32,10 +32,30 @@ describe('stop mode', () => {
     expect(s.keyStats.b.t).toBe(0)
   })
 
-  it('computes wpm from correct characters', () => {
+  it('computes wpm from timed correct characters', () => {
+    // 11 keys 600ms apart: the first key starts the clock, so 10 chars in 6000ms
+    // => 10/5 words / 0.1 min = 20 wpm (a steady 600ms/key is exactly 20 wpm).
     const s = typeAll(createState('abcdefghijk', 'stop'), 'abcdefghijk', 0, 600)
-    // 11 chars in 6000ms => 11/5 words / 0.1 min = 22 wpm
-    expect(wpm(s)).toBeCloseTo(22)
+    expect(wpm(s)).toBeCloseTo(20)
+  })
+
+  it('does not spike at the start of a round', () => {
+    const s = typeAll(createState('abcdef', 'stop'), 'ab', 0, 600)
+    expect(wpm(s)).toBeCloseTo(20)
+  })
+
+  it('a steady pace reads the same regardless of a break in the middle', () => {
+    let s = typeAll(createState('abcdefghij', 'stop'), 'abcde', 0, 600)
+    s = typeAll(s, 'fghij', 2400 + IDLE_MS + 1000, 600)
+    expect(wpm(s)).toBeCloseTo(20)
+  })
+
+  it('time spent on mistakes lowers the speed', () => {
+    let s = typeAll(createState('abc', 'stop'), 'ab', 0, 600)
+    s = typeChar(s, 'x', 1200)
+    s = typeChar(s, 'c', 1800)
+    // 2 timed chars over 1800ms
+    expect(wpm(s)).toBeCloseTo(2 / 5 / (1800 / 60000))
   })
 
   it('ignores backspace', () => {
@@ -57,5 +77,13 @@ describe('backspace mode', () => {
     expect(s.marks[0]).toBe('fixed')
     s = typeChar(s, 'b', 200)
     expect(s.done).toBe(true)
+  })
+
+  it('does not double count a character that was deleted and retyped', () => {
+    let s = typeAll(createState('abc', 'backspace'), 'ab', 0, 600)
+    s = backspace(s)
+    s = typeChar(s, 'b', 1200)
+    s = typeChar(s, 'c', 1800)
+    expect(wpm(s)).toBeCloseTo(2 / 5 / (1800 / 60000))
   })
 })

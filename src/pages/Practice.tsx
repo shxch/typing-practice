@@ -3,8 +3,10 @@ import { KeyboardMap } from '../components/KeyboardMap'
 import { ResultCard, type RoundResult } from '../components/ResultCard'
 import { TypingArea } from '../components/TypingArea'
 import { accuracy, backspace, createState, slowestKeys, typeChar, wpm } from '../engine/typing'
-import { STAGE_NAMES, UNITS, computeProgress, type Progress } from '../lessons/curriculum'
+import { UNITS, computeProgress, type Progress } from '../lessons/curriculum'
 import { generateLesson } from '../lessons/generate'
+import { useT } from '../i18n'
+import { playCorrect, playError, playFinish, playUnlock } from '../sound/sound'
 import { useApp } from '../store/app'
 import type { InProgress } from '../store/types'
 import { syncNow } from '../sync/runner'
@@ -28,6 +30,7 @@ export function Practice() {
   const device = useApp((s) => s.config.device)
   const setInProgress = useApp((s) => s.setInProgress)
   const addSession = useApp((s) => s.addSession)
+  const t = useT()
 
   const progress = useMemo(() => computeProgress(Object.values(sessions), settings), [sessions, settings])
 
@@ -72,12 +75,15 @@ export function Practice() {
       addSession(session)
       setInProgress(null)
       const after = computeProgress([...Object.values(sessions), session], settings)
+      const newKeys = [...after.unlocked].filter((c) => !before.has(c))
       setResult({
         wpm: session.wpm,
         accuracy: session.accuracy,
         slowest: slowestKeys(state.keyStats),
-        newKeys: [...after.unlocked].filter((c) => !before.has(c)),
+        newKeys,
       })
+      playFinish()
+      if (newKeys.length > 0) playUnlock()
       void syncNow()
     },
     [progress, device, addSession, setInProgress, sessions, settings],
@@ -113,6 +119,10 @@ export function Practice() {
       e.preventDefault()
       setImeWarning(false)
       if (next === current.state) return
+      if (next.presses > current.state.presses) {
+        if (next.correctPresses > current.state.correctPresses) playCorrect(e.key === ' ')
+        else playError()
+      }
 
       // The clock for a new lesson starts at its first key, not when it was generated.
       const lesson = inProgress ? current : { ...current, startedAt: Date.now() }
@@ -125,19 +135,20 @@ export function Practice() {
 
   const st = current.state
   const resumedFromElsewhere = inProgress && inProgress.device !== device && st.pos > 0
-  const stageName = STAGE_NAMES[progress.stage]
+  const stageName = { A: t.stageA, B: t.stageB, C: t.stageC }[progress.stage]
+  const panel = 'rounded-2xl bg-white/80 backdrop-blur shadow-lg'
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between text-slate-600">
+      <div className={`${panel} flex flex-wrap gap-2 items-center justify-between text-slate-600 px-5 py-3`}>
         <div>
           <span className="font-semibold text-violet-700">{stageName}</span>
           <span className="mx-2">·</span>
-          已解锁 {progress.unlockedUnits} / {UNITS.length} 组按键
+          {t.unlockedUnits(progress.unlockedUnits, UNITS.length)}
           {progress.focus && (
             <>
               <span className="mx-2">·</span>
-              重点练习 <span className="font-mono font-bold text-violet-700 px-1.5 rounded bg-violet-100">{progress.focus}</span>
+              {t.focusKey} <span className="font-mono font-bold text-violet-700 px-1.5 rounded bg-violet-100">{progress.focus}</span>
             </>
           )}
         </div>
@@ -154,42 +165,41 @@ export function Practice() {
 
       {resumedFromElsewhere && !result && (
         <div className="rounded-xl bg-sky-50 border border-sky-200 px-4 py-3 text-sky-800 flex justify-between items-center">
-          <span>继续在「{inProgress.device}」上没打完的练习，直接接着打就行～</span>
+          <span>{t.resumeBanner(inProgress.device)}</span>
           <button onClick={newRound} className="text-sm underline">
-            换一篇
+            {t.newText}
           </button>
         </div>
       )}
 
       {imeWarning && (
         <div className="rounded-xl bg-amber-50 border border-amber-300 px-4 py-3 text-amber-800">
-          好像开着中文输入法，请切换到英文输入法再打字（Mac：按 Caps Lock 或 Ctrl+空格；Windows：按 Shift）。
+          {t.imeWarning}
         </div>
       )}
 
       {result ? (
         <ResultCard result={result} onNext={newRound} />
       ) : (
-        <div className="rounded-2xl bg-white shadow-lg px-10 py-8 min-h-48">
+        <div className={`${panel} px-10 py-8 min-h-48`}>
           <TypingArea state={st} />
         </div>
       )}
 
-      <div className="flex justify-center pt-2">
+      <div className={`${panel} flex flex-col items-center gap-4 px-5 py-5`}>
         <KeyboardMap progress={progress} />
+        {!result && (
+          <div className="text-center text-sm text-slate-500">
+            {settings.errorMode === 'stop' ? t.hintStop : t.hintBackspace}
+            {st.pos === 0 && t.hintStart}
+            {st.pos > 0 && (
+              <button onClick={newRound} className="ml-3 underline">
+                {t.newText}
+              </button>
+            )}
+          </div>
+        )}
       </div>
-
-      {!result && (
-        <div className="text-center text-sm text-slate-400">
-          {settings.errorMode === 'stop' ? '打错了要打对才能继续' : '可以用退格键改错'}
-          {st.pos === 0 && ' · 直接开始打字即可'}
-          {st.pos > 0 && (
-            <button onClick={newRound} className="ml-3 underline">
-              换一篇
-            </button>
-          )}
-        </div>
-      )}
     </div>
   )
 }

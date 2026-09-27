@@ -43,6 +43,15 @@ describe('generateLesson', () => {
     expect(hits(generateLesson(withFocus, 20, rng(3)))).toBeGreaterThanOrEqual(10)
   })
 
+  it('leans on a weak key from an earlier stage', () => {
+    const b = computeProgress([], { ...base, manualUnits: 20 })
+    const qText = generateLesson({ ...b, focus: 'q' }, 30, rng(4))
+    expect([...qText].filter((c) => c === 'q').length).toBeGreaterThanOrEqual(8)
+    const c = computeProgress([], { ...base, manualUnits: 26 })
+    const tText = generateLesson({ ...c, focus: 'T' }, 30, rng(5))
+    expect([...tText].filter((ch) => ch === 'T').length).toBeGreaterThanOrEqual(6)
+  })
+
   it('practices capitals in stage B and punctuation in stage C', () => {
     const b = computeProgress([], { ...base, manualUnits: 20 })
     expect(generateLesson(b, 30, rng(1))).toMatch(/[A-Z]/)

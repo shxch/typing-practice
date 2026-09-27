@@ -1,0 +1,182 @@
+import { useApp } from './store/app'
+import type { Lang } from './store/types'
+
+const zh = {
+  appTitle: '打字小达人',
+  navPractice: '练习',
+  navSettings: '设置',
+  langToggle: 'EN',
+  langToggleTitle: 'Switch to English',
+
+  stageA: '小写字母',
+  stageB: '大写字母',
+  stageC: '标点符号',
+  unlockedUnits: (n: number, total: number) => `已解锁 ${n} / ${total} 组按键`,
+  focusKey: '重点练习',
+  resumeBanner: (device: string) => `继续在「${device}」上没打完的练习，直接接着打就行～`,
+  newText: '换一篇',
+  imeWarning: '好像开着中文输入法，请切换到英文输入法再打字（Mac：按 Caps Lock 或 Ctrl+空格；Windows：按 Shift）。',
+  hintStop: '打错了要打对才能继续',
+  hintBackspace: '可以用退格键改错',
+  hintStart: ' · 直接开始打字即可',
+
+  unlockedNew: '🎉 解锁新按键：',
+  speed: '速度 (WPM)',
+  accuracy: '准确率',
+  slowestKeys: '最慢的键：',
+  nextRound: '下一轮（按回车）',
+  space: '空格',
+  notPracticed: '还没有练习',
+  keyTooltip: (c: string, w: number, a: number) => `${c}：${w} WPM，准确率 ${a}%`,
+
+  syncUnconfigured: '未设置同步',
+  syncIdle: '准备同步',
+  syncing: '同步中…',
+  syncPending: '有未同步的进度',
+  syncOk: '已同步 ✓',
+  syncOffline: '离线',
+  syncError: '同步出错',
+  syncClick: '点击立即同步',
+  statusText: { unconfigured: '未设置', idle: '等待同步', syncing: '同步中', ok: '正常', offline: '离线', error: '出错' },
+  errTokenInvalid: 'Token 无效或已过期',
+  errTokenNoWrite: 'Token 没有写入权限',
+  errGitHub: (m: string) => `GitHub 错误：${m}`,
+  errOffline: '网络不可用，联网后会自动同步',
+
+  secSync: '进度同步（每台设备设置一次）',
+  syncIntro: '练习记录保存在你的私有仓库里，MacBook 和家里电脑填同样的信息就能共享进度。Token 只保存在这台设备的浏览器里。',
+  ghUser: 'GitHub 用户名',
+  dataRepo: '数据仓库',
+  token: 'Token',
+  tokenHint: '在 GitHub 创建 fine-grained token：Repository access 只选数据仓库，Permissions → Contents 选 Read and write。',
+  createToken: '去创建 token →',
+  deviceName: '这台设备的名字',
+  deviceHint: '换设备继续练习时会显示',
+  testSync: '测试连接并同步',
+  checking: '检查中…',
+  checkOk: '✓ 连接成功',
+  checkNetwork: '✗ 网络错误',
+  status: '状态：',
+  lastSync: '上次同步',
+
+  secLook: '外观与声音',
+  language: '界面语言',
+  wallpaper: '背景',
+  soundOn: '音效',
+  soundHint: '打对、打错、完成一轮、解锁新键时播放。只影响这台设备。',
+  volume: '音量',
+  soundTest: '试听',
+
+  secPractice: '练习设置（所有设备共用）',
+  targetWpm: '目标速度 (WPM)',
+  targetWpmHint: '每个键都达到这个速度才会解锁下一个键',
+  targetAcc: '目标准确率 (%)',
+  lessonWords: '每轮单词数',
+  minSamples: '达标所需练习次数',
+  minSamplesHint: '一个键至少打对这么多次，速度才算数',
+  onError: '打错时',
+  modeStop: '停住，打对才继续',
+  modeBackspace: '继续，可用退格改',
+
+  secCurriculum: '课程进度',
+  curriculumIntro: (n: number) => `按练习成绩自动解锁了 ${n} 组。需要时可以手动调整（比如直接跳到大写或标点）。`,
+  manualNote: '当前为手动设置。',
+  restoreAuto: '恢复自动解锁',
+}
+
+type Dict = typeof zh
+
+const en: Dict = {
+  appTitle: 'Typing Star',
+  navPractice: 'Practice',
+  navSettings: 'Settings',
+  langToggle: '中',
+  langToggleTitle: '切换到中文',
+
+  stageA: 'Lowercase',
+  stageB: 'Capitals',
+  stageC: 'Punctuation',
+  unlockedUnits: (n, total) => `${n} / ${total} key groups unlocked`,
+  focusKey: 'Focus',
+  resumeBanner: (device) => `Picking up where you left off on "${device}" — just keep typing!`,
+  newText: 'New text',
+  imeWarning:
+    'It looks like a Chinese input method is on. Switch to English input first (Mac: Caps Lock or Ctrl+Space; Windows: Shift).',
+  hintStop: 'Fix each mistake to continue',
+  hintBackspace: 'Use Backspace to fix mistakes',
+  hintStart: ' · Just start typing',
+
+  unlockedNew: '🎉 New key unlocked: ',
+  speed: 'Speed (WPM)',
+  accuracy: 'Accuracy',
+  slowestKeys: 'Slowest keys: ',
+  nextRound: 'Next round (Enter)',
+  space: 'Space',
+  notPracticed: 'not practiced yet',
+  keyTooltip: (c, w, a) => `${c}: ${w} WPM, ${a}% accuracy`,
+
+  syncUnconfigured: 'Sync not set up',
+  syncIdle: 'Ready to sync',
+  syncing: 'Syncing…',
+  syncPending: 'Not synced yet',
+  syncOk: 'Synced ✓',
+  syncOffline: 'Offline',
+  syncError: 'Sync error',
+  syncClick: 'Click to sync now',
+  statusText: { unconfigured: 'not set up', idle: 'waiting', syncing: 'syncing', ok: 'OK', offline: 'offline', error: 'error' },
+  errTokenInvalid: 'Token is invalid or expired',
+  errTokenNoWrite: 'Token has no write permission',
+  errGitHub: (m) => `GitHub error: ${m}`,
+  errOffline: 'No network — will sync once back online',
+
+  secSync: 'Progress sync (set up once per device)',
+  syncIntro:
+    'Practice history is stored in your private repo. Enter the same details on every device to share progress. The token stays in this browser only.',
+  ghUser: 'GitHub user',
+  dataRepo: 'Data repo',
+  token: 'Token',
+  tokenHint:
+    'Create a fine-grained token on GitHub: Repository access → only the data repo; Permissions → Contents → Read and write.',
+  createToken: 'Create a token →',
+  deviceName: 'Device name',
+  deviceHint: 'Shown when continuing on another device',
+  testSync: 'Test connection & sync',
+  checking: 'Checking…',
+  checkOk: '✓ Connected',
+  checkNetwork: '✗ Network error',
+  status: 'Status: ',
+  lastSync: 'last synced',
+
+  secLook: 'Look & sound',
+  language: 'Language',
+  wallpaper: 'Background',
+  soundOn: 'Sound effects',
+  soundHint: 'Plays on correct and wrong keys, finished rounds and unlocks. This device only.',
+  volume: 'Volume',
+  soundTest: 'Try it',
+
+  secPractice: 'Practice (shared by all devices)',
+  targetWpm: 'Target speed (WPM)',
+  targetWpmHint: 'Every key must reach this speed before the next key unlocks',
+  targetAcc: 'Target accuracy (%)',
+  lessonWords: 'Words per round',
+  minSamples: 'Hits before speed counts',
+  minSamplesHint: 'A key needs this many correct hits before its speed is trusted',
+  onError: 'On a mistake',
+  modeStop: 'Stop until fixed',
+  modeBackspace: 'Keep going, Backspace to fix',
+
+  secCurriculum: 'Course progress',
+  curriculumIntro: (n) => `${n} groups unlocked from practice results. You can adjust this manually (e.g. jump to capitals or punctuation).`,
+  manualNote: 'Currently set manually.',
+  restoreAuto: 'Back to automatic',
+}
+
+export const DICTS: Record<Lang, Dict> = { zh, en }
+
+export function useT(): Dict {
+  return DICTS[useApp((s) => s.shared.settings.lang)]
+}
+
+/** For code outside React (e.g. the sync runner). */
+export const t = (): Dict => DICTS[useApp.getState().shared.settings.lang]

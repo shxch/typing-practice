@@ -1,23 +1,17 @@
 import { useState, type ReactNode } from 'react'
-import { STAGE_NAMES, UNITS, computeProgress, unitLabel } from '../lessons/curriculum'
-import { useApp, type SyncStatus } from '../store/app'
+import { WALLPAPERS } from '../content/wallpapers'
+import { useT } from '../i18n'
+import { UNITS, computeProgress, unitLabel } from '../lessons/curriculum'
+import { playCorrect, playError, playFinish } from '../sound/sound'
+import { useApp } from '../store/app'
 import { GitHubClient, GitHubError } from '../sync/github'
 import { syncNow } from '../sync/runner'
 
 const TOKEN_URL = 'https://github.com/settings/personal-access-tokens/new'
 
-const STATUS_TEXT: Record<SyncStatus, string> = {
-  unconfigured: '未设置',
-  idle: '等待同步',
-  syncing: '同步中',
-  ok: '正常',
-  offline: '离线',
-  error: '出错',
-}
-
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="rounded-2xl bg-white shadow p-6 space-y-4">
+    <section className="rounded-2xl bg-white/85 backdrop-blur shadow p-6 space-y-4">
       <h2 className="text-lg font-bold text-slate-800">{title}</h2>
       {children}
     </section>
@@ -36,7 +30,9 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
   )
 }
 
-const input = 'w-full rounded-lg border border-slate-300 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-violet-300'
+const input = 'w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-violet-300'
+
+const clamp = (v: string, lo: number, hi: number) => Math.min(hi, Math.max(lo, Number(v) || lo))
 
 export function Settings() {
   const config = useApp((s) => s.config)
@@ -47,38 +43,102 @@ export function Settings() {
   const lastSyncedAt = useApp((s) => s.lastSyncedAt)
   const setConfig = useApp((s) => s.setConfig)
   const updateSettings = useApp((s) => s.updateSettings)
+  const t = useT()
   const [check, setCheck] = useState<string>('')
 
   const earned = computeProgress(Object.values(sessions), { ...settings, manualUnits: null }).earnedUnits
   const units = settings.manualUnits ?? earned
+  const stageName = { A: t.stageA, B: t.stageB, C: t.stageC }
 
   async function testConnection() {
-    setCheck('检查中…')
+    setCheck(t.checking)
     try {
       await new GitHubClient(config).check()
-      setCheck('✓ 连接成功')
+      setCheck(t.checkOk)
       void syncNow()
     } catch (e) {
-      setCheck(e instanceof GitHubError ? `✗ ${e.message}` : '✗ 网络错误')
+      setCheck(e instanceof GitHubError ? `✗ ${e.message}` : t.checkNetwork)
     }
+  }
+
+  function trySound() {
+    playCorrect()
+    setTimeout(() => playCorrect(), 160)
+    setTimeout(() => playError(), 420)
+    setTimeout(() => playFinish(), 900)
   }
 
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
-      <Section title="进度同步（每台设备设置一次）">
-        <p className="text-sm text-slate-500">
-          练习记录保存在你的私有仓库里，MacBook 和家里电脑填同样的信息就能共享进度。Token 只保存在这台设备的浏览器里。
-        </p>
-        <Field label="GitHub 用户名">
+      <Section title={t.secLook}>
+        <Field label={t.language}>
+          <div className="flex gap-2">
+            {(
+              [
+                ['zh', '中文'],
+                ['en', 'English'],
+              ] as const
+            ).map(([v, text]) => (
+              <button
+                key={v}
+                onClick={() => updateSettings({ lang: v })}
+                className={`px-4 py-1.5 rounded-lg border ${
+                  settings.lang === v ? 'bg-violet-600 border-violet-600 text-white' : 'bg-white border-slate-300 text-slate-600'
+                }`}
+              >
+                {text}
+              </button>
+            ))}
+          </div>
+        </Field>
+
+        <div className="space-y-2">
+          <div className="text-slate-600">{t.wallpaper}</div>
+          <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+            {WALLPAPERS.map((w) => (
+              <button
+                key={w.id}
+                onClick={() => updateSettings({ wallpaper: w.id })}
+                title={w.name}
+                className={`aspect-video rounded-xl bg-cover bg-center border-2 transition ${
+                  settings.wallpaper === w.id ? 'border-violet-600 ring-4 ring-violet-200' : 'border-white/70 hover:border-violet-300'
+                }`}
+                style={{ backgroundImage: w.thumb }}
+              />
+            ))}
+          </div>
+        </div>
+
+        <Field label={t.soundOn} hint={t.soundHint}>
+          <div className="flex items-center gap-4">
+            <input type="checkbox" checked={config.sound} onChange={(e) => setConfig({ sound: e.target.checked })} />
+            <span className="text-slate-500 text-sm">{t.volume}</span>
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.05}
+              value={config.volume}
+              disabled={!config.sound}
+              onChange={(e) => setConfig({ volume: Number(e.target.value) })}
+              className="flex-1 accent-violet-600"
+            />
+            <button onClick={trySound} disabled={!config.sound} className="text-sm text-violet-600 underline disabled:opacity-40">
+              {t.soundTest}
+            </button>
+          </div>
+        </Field>
+      </Section>
+
+      <Section title={t.secSync}>
+        <p className="text-sm text-slate-500">{t.syncIntro}</p>
+        <Field label={t.ghUser}>
           <input className={input} value={config.owner} onChange={(e) => setConfig({ owner: e.target.value.trim() })} />
         </Field>
-        <Field label="数据仓库">
+        <Field label={t.dataRepo}>
           <input className={input} value={config.repo} onChange={(e) => setConfig({ repo: e.target.value.trim() })} />
         </Field>
-        <Field
-          label="Token"
-          hint="在 GitHub 创建 fine-grained token：Repository access 只选数据仓库，Permissions → Contents 选 Read and write。"
-        >
+        <Field label={t.token} hint={t.tokenHint}>
           <input
             className={input}
             type="password"
@@ -87,72 +147,73 @@ export function Settings() {
             onChange={(e) => setConfig({ token: e.target.value.trim() })}
           />
           <a className="text-xs text-violet-600 underline" href={TOKEN_URL} target="_blank" rel="noreferrer">
-            去创建 token →
+            {t.createToken}
           </a>
         </Field>
-        <Field label="这台设备的名字" hint="换设备继续练习时会显示">
+        <Field label={t.deviceName} hint={t.deviceHint}>
           <input className={input} value={config.device} onChange={(e) => setConfig({ device: e.target.value })} />
         </Field>
         <div className="flex items-center gap-3">
           <button onClick={testConnection} className="px-4 py-2 rounded-lg bg-violet-600 text-white hover:bg-violet-700">
-            测试连接并同步
+            {t.testSync}
           </button>
           <span className="text-sm text-slate-600">{check}</span>
         </div>
         <div className="text-sm text-slate-500">
-          状态：{STATUS_TEXT[status]}
-          {statusMessage && `（${statusMessage}）`}
-          {lastSyncedAt && ` · 上次同步 ${new Date(lastSyncedAt).toLocaleTimeString()}`}
+          {t.status}
+          {t.statusText[status]}
+          {statusMessage && ` (${statusMessage})`}
+          {lastSyncedAt && ` · ${t.lastSync} ${new Date(lastSyncedAt).toLocaleTimeString()}`}
         </div>
       </Section>
 
-      <Section title="练习设置（所有设备共用）">
-        <Field label="目标速度 (WPM)" hint="每个键都达到这个速度才会解锁下一个键">
+      <Section title={t.secPractice}>
+        <Field label={t.targetWpm} hint={t.targetWpmHint}>
           <input
             className={input}
             type="number"
             min={5}
             max={100}
             value={settings.targetWpm}
-            onChange={(e) => updateSettings({ targetWpm: Math.max(5, Number(e.target.value) || 5) })}
+            onChange={(e) => updateSettings({ targetWpm: clamp(e.target.value, 5, 100) })}
           />
         </Field>
-        <Field label="目标准确率 (%)">
+        <Field label={t.targetAcc}>
           <input
             className={input}
             type="number"
             min={50}
             max={100}
             value={Math.round(settings.targetAccuracy * 100)}
-            onChange={(e) => updateSettings({ targetAccuracy: Math.min(100, Math.max(50, Number(e.target.value) || 50)) / 100 })}
+            onChange={(e) => updateSettings({ targetAccuracy: clamp(e.target.value, 50, 100) / 100 })}
           />
         </Field>
-        <Field label="每轮单词数">
+        <Field label={t.lessonWords}>
           <input
             className={input}
             type="number"
             min={5}
             max={80}
             value={settings.lessonWords}
-            onChange={(e) => updateSettings({ lessonWords: Math.min(80, Math.max(5, Number(e.target.value) || 5)) })}
+            onChange={(e) => updateSettings({ lessonWords: clamp(e.target.value, 5, 80) })}
           />
         </Field>
-        <Field label="达标所需练习次数" hint="一个键至少打对这么多次，速度才算数">
+        <Field label={t.minSamples} hint={t.minSamplesHint}>
           <input
             className={input}
             type="number"
             min={5}
             max={100}
             value={settings.minSamples}
-            onChange={(e) => updateSettings({ minSamples: Math.min(100, Math.max(5, Number(e.target.value) || 5)) })}
+            onChange={(e) => updateSettings({ minSamples: clamp(e.target.value, 5, 100) })}
           />
         </Field>
-        <Field label="打错时">
+        <Field label={t.onError}>
           <div className="flex gap-4">
             {(
               [
-                ['stop', '停住，打对才继续'],
-                ['backspace', '继续，可用退格改'],
+                ['stop', t.modeStop],
+                ['backspace', t.modeBackspace],
               ] as const
             ).map(([v, text]) => (
               <label key={v} className="flex items-center gap-1.5">
@@ -164,10 +225,10 @@ export function Settings() {
         </Field>
       </Section>
 
-      <Section title="课程进度">
+      <Section title={t.secCurriculum}>
         <p className="text-sm text-slate-500">
-          按练习成绩自动解锁了 {earned} 组。需要时可以手动调整（比如直接跳到大写或标点）。
-          {settings.manualUnits !== null && <span className="text-amber-600">当前为手动设置。</span>}
+          {t.curriculumIntro(earned)}
+          {settings.manualUnits !== null && <span className="text-amber-600"> {t.manualNote}</span>}
         </p>
         <input
           type="range"
@@ -181,7 +242,7 @@ export function Settings() {
           {UNITS.map((u, i) => (
             <span
               key={i}
-              title={STAGE_NAMES[u.stage]}
+              title={stageName[u.stage]}
               className={`px-2 py-0.5 rounded font-mono text-sm ${
                 i < units
                   ? u.stage === 'A'
@@ -198,7 +259,7 @@ export function Settings() {
         </div>
         {settings.manualUnits !== null && (
           <button onClick={() => updateSettings({ manualUnits: null })} className="text-sm text-violet-600 underline">
-            恢复自动解锁
+            {t.restoreAuto}
           </button>
         )}
       </Section>

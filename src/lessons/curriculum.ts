@@ -23,12 +23,6 @@ export const UNITS: Unit[] = [
   ...PUNCTUATION.map((p) => ({ stage: 'C' as const, chars: p.split('') })),
 ]
 
-export const STAGE_NAMES: Record<Stage, string> = {
-  A: '小写字母',
-  B: '大写字母',
-  C: '标点符号',
-}
-
 export interface UnlockSettings {
   targetWpm: number
   targetAccuracy: number
@@ -59,7 +53,7 @@ export interface Progress {
   unlocked: Set<string>
   stage: Stage
   keys: Record<string, KeyPerf>
-  /** The key the next lesson should emphasize. */
+  /** The weakest unlocked key; the next lesson emphasizes it. */
   focus: string | null
   /** Unlocked keys that still miss the target, most needed first. */
   weak: string[]
@@ -109,20 +103,19 @@ export function computeProgress(sessions: SessionLike[], s: UnlockSettings): Pro
   const unlockedUnits = Math.min(UNITS.length, Math.max(1, s.manualUnits ?? earned))
   const unlocked = unitChars(unlockedUnits)
   const stage = UNITS[unlockedUnits - 1].stage
-  const allDone = unlockedUnits === UNITS.length
 
-  // Keys of the current stage (or everything once done) that still need work.
-  const active = UNITS.slice(0, unlockedUnits)
-    .filter((u) => allDone || u.stage === stage)
-    .flatMap((u) => u.chars)
+  // Unlocking the next unit needs *every* unlocked key on target, so look at all of them,
+  // not just the current stage: a lowercase key that slipped should get practice too.
+  const all = UNITS.slice(0, unlockedUnits).flatMap((u) => u.chars)
   // Weakest first; on a tie the most recently unlocked key wins.
-  const weak = active
+  const weak = all
     .map((c, i) => ({ c, i }))
     .filter(({ c }) => !meetsTarget(keys[c], s))
     .sort((a, b) => weakness(keys[b.c], s) - weakness(keys[a.c], s) || b.i - a.i)
     .map(({ c }) => c)
 
-  const focus = weak[0] ?? (allDone ? slowest(active, keys) : null)
+  // Even when every key is on target, keep polishing the slowest one.
+  const focus = weak[0] ?? slowest(all, keys)
   return {
     unlockedUnits,
     earnedUnits: earned,
@@ -131,7 +124,7 @@ export function computeProgress(sessions: SessionLike[], s: UnlockSettings): Pro
     keys,
     focus,
     weak,
-    done: allDone && weak.length === 0,
+    done: unlockedUnits === UNITS.length && weak.length === 0,
   }
 }
 

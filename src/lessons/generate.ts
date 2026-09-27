@@ -66,32 +66,40 @@ export function drillSyllables(focus: string, unlocked: Set<string>): string[] {
 /** Below this many real words for the focus key, mix in drill syllables. */
 const MIN_FOCUS_WORDS = 12
 
-function stageA(p: Progress, count: number, rng: Rng): string {
+/** Base words for a lesson; when the focus is a lowercase letter, lean on it (with drills if words are scarce). */
+function baseWords(p: Progress, count: number, rng: Rng): string[] {
   const pool = lowercasePool(p.unlocked)
   const focus = p.focus
-  if (!focus) return pickWords(pool, null, count, rng).join(' ')
+  if (!focus || !/[a-z]/.test(focus)) return pickWords(pool, null, count, rng)
   let focused = pool.filter((w) => w.includes(focus))
   let share = 0.5
   if (focused.length < MIN_FOCUS_WORDS) {
     focused = [...focused, ...focused, ...drillSyllables(focus, p.unlocked)]
     share = 0.65
   }
-  return pickFrom(pool, focused, count, rng, share).join(' ')
+  return pickFrom(pool, focused, count, rng, share)
+}
+
+/** Real words starting with the focus capital's letter, capitalized. */
+const capitalWords = (cap: string) => WORDS.filter((w) => w[0] === cap.toLowerCase()).map(capitalize)
+
+function stageA(p: Progress, count: number, rng: Rng): string {
+  return baseWords(p, count, rng).join(' ')
 }
 
 function stageB(p: Progress, count: number, rng: Rng): string {
   const caps = [...p.unlocked].filter((c) => /[A-Z]/.test(c))
   const names = PROPER_NOUNS.filter((n) => caps.includes(n[0]) && onlyUses(n, p.unlocked))
-  const words = pickWords(lowercasePool(p.unlocked), null, count, rng)
+  const words = baseWords(p, count, rng)
   const focusCap = p.focus && /[A-Z]/.test(p.focus) ? p.focus : null
-  const focusWords = focusCap ? WORDS.filter((w) => w[0] === focusCap.toLowerCase()) : []
+  const focusWords = focusCap ? capitalWords(focusCap) : []
   const focusNames = focusCap ? names.filter((n) => n[0] === focusCap) : []
 
   return words
     .map((w, i) => {
       const r = rng()
       if (focusCap && r < 0.35) {
-        return focusNames.length > 0 && rng() < 0.4 ? pick(focusNames, rng) : capitalize(pick(focusWords, rng))
+        return focusNames.length > 0 && rng() < 0.4 ? pick(focusNames, rng) : pick(focusWords, rng)
       }
       if (r < 0.55 && names.length > 0) return pick(names, rng)
       if (r < 0.7 && caps.includes(w[0].toUpperCase())) return capitalize(w)
@@ -115,7 +123,9 @@ const ENDINGS = ['.', '?', '!']
 
 function stageC(p: Progress, count: number, rng: Rng): string {
   const unlocked = p.unlocked
-  const words = pickWords(lowercasePool(unlocked), null, count, rng)
+  const words = baseWords(p, count, rng)
+  const focusCap = p.focus && /[A-Z]/.test(p.focus) ? p.focus : null
+  const focusCapWords = focusCap ? capitalWords(focusCap) : []
   const marks = Object.keys(DECORATE).filter((m) => unlocked.has(m))
   const endings = ENDINGS.filter((m) => unlocked.has(m))
   const focus = p.focus
@@ -126,6 +136,7 @@ function stageC(p: Progress, count: number, rng: Rng): string {
   let target = 4 + Math.floor(rng() * 4)
   for (let i = 0; i < words.length; i++) {
     let w = sentenceLen === 0 ? capitalize(words[i]) : words[i]
+    if (focusCap && sentenceLen > 0 && rng() < 0.35) w = pick(focusCapWords, rng)
     const last = i === words.length - 1
     if (sentenceLen + 1 >= target || last) {
       const end = focusIsEnding && rng() < 0.6 ? focus! : pick(endings, rng)
