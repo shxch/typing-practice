@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react'
 import { WALLPAPERS } from '../content/wallpapers'
 import { useT } from '../i18n'
 import { UNITS, computeProgress, unitLabel } from '../lessons/curriculum'
-import { playCorrect, playError, playFinish } from '../sound/sound'
+import { playCorrect, playError, playFinish, type SoundStyle } from '../sound/sound'
 import { useApp } from '../store/app'
 import { GitHubClient, GitHubError } from '../sync/github'
 import { syncNow } from '../sync/runner'
@@ -61,11 +61,11 @@ export function Settings() {
     }
   }
 
-  function trySound() {
-    playCorrect()
-    setTimeout(() => playCorrect(), 160)
-    setTimeout(() => playError(), 420)
-    setTimeout(() => playFinish(), 900)
+  /** A few keystrokes, a mistake, then the end-of-round chime. */
+  function trySound(style: SoundStyle = config.soundStyle) {
+    ;[0, 150, 300, 450].forEach((ms, i) => setTimeout(() => playCorrect(style, i === 2), ms))
+    setTimeout(() => playError(), 700)
+    setTimeout(() => playFinish(), 1100)
   }
 
   return (
@@ -123,9 +123,28 @@ export function Settings() {
               onChange={(e) => setConfig({ volume: Number(e.target.value) })}
               className="flex-1 accent-violet-600"
             />
-            <button onClick={trySound} disabled={!config.sound} className="text-sm text-violet-600 underline disabled:opacity-40">
+            <button onClick={() => trySound()} disabled={!config.sound} className="text-sm text-violet-600 underline disabled:opacity-40">
               {t.soundTest}
             </button>
+          </div>
+        </Field>
+        <Field label={t.soundStyle}>
+          <div className="flex gap-2">
+            {(['keyboard', 'kalimba', 'wood'] as const).map((v) => (
+              <button
+                key={v}
+                disabled={!config.sound}
+                onClick={() => {
+                  setConfig({ soundStyle: v })
+                  ;[0, 150, 300, 450].forEach((ms, i) => setTimeout(() => playCorrect(v, i === 2), ms))
+                }}
+                className={`px-4 py-1.5 rounded-lg border disabled:opacity-40 ${
+                  config.soundStyle === v ? 'bg-violet-600 border-violet-600 text-white' : 'bg-white border-slate-300 text-slate-600'
+                }`}
+              >
+                {t.styles[v]}
+              </button>
+            ))}
           </div>
         </Field>
       </Section>

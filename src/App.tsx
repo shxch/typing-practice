@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Background } from './components/Background'
 import { SyncBadge } from './components/SyncBadge'
 import { findWallpaper } from './content/wallpapers'
 import { useT } from './i18n'
@@ -63,11 +64,8 @@ export default function App() {
   )
 
   return (
-    <div
-      className="min-h-screen bg-cover bg-center bg-fixed"
-      // Wallpapers come in all sizes; "cover" fills the screen and crops the overflow evenly.
-      style={{ backgroundImage: wallpaper.css, backgroundColor: '#f5f3ff' }}
-    >
+    <div className="min-h-screen relative isolate">
+      <Background wallpaper={wallpaper} />
       <div className="max-w-5xl mx-auto px-6 pt-4">
         <header className="flex flex-wrap gap-3 items-center justify-between rounded-2xl bg-white/80 backdrop-blur shadow px-5 py-3">
           <h1 className="text-2xl font-extrabold text-violet-700">⌨️ {t.appTitle}</h1>

@@ -28,6 +28,7 @@ export function Practice() {
   const settings = useApp((s) => s.shared.settings)
   const inProgress = useApp((s) => s.shared.inProgress)
   const device = useApp((s) => s.config.device)
+  const soundStyle = useApp((s) => s.config.soundStyle)
   const setInProgress = useApp((s) => s.setInProgress)
   const addSession = useApp((s) => s.addSession)
   const t = useT()
@@ -120,7 +121,7 @@ export function Practice() {
       setImeWarning(false)
       if (next === current.state) return
       if (next.presses > current.state.presses) {
-        if (next.correctPresses > current.state.correctPresses) playCorrect(e.key === ' ')
+        if (next.correctPresses > current.state.correctPresses) playCorrect(soundStyle, e.key === ' ')
         else playError()
       }
 
@@ -131,7 +132,7 @@ export function Practice() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [current, inProgress, result, device, finish, newRound, setInProgress])
+  }, [current, inProgress, result, device, soundStyle, finish, newRound, setInProgress])
 
   const st = current.state
   const resumedFromElsewhere = inProgress && inProgress.device !== device && st.pos > 0

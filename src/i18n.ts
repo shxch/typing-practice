@@ -66,6 +66,8 @@ const zh = {
   soundHint: '打对、打错、完成一轮、解锁新键时播放。只影响这台设备。',
   volume: '音量',
   soundTest: '试听',
+  soundStyle: '打对的声音',
+  styles: { keyboard: '键盘声', kalimba: '拇指琴', wood: '木鱼' },
 
   secPractice: '练习设置（所有设备共用）',
   targetWpm: '目标速度 (WPM)',
@@ -154,6 +156,8 @@ const en: Dict = {
   soundHint: 'Plays on correct and wrong keys, finished rounds and unlocks. This device only.',
   volume: 'Volume',
   soundTest: 'Try it',
+  soundStyle: 'Correct-key sound',
+  styles: { keyboard: 'Keyboard', kalimba: 'Kalimba', wood: 'Wood block' },
 
   secPractice: 'Practice (shared by all devices)',
   targetWpm: 'Target speed (WPM)',

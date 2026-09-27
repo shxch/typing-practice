@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import type { SoundStyle } from '../sound/sound'
 import { monthOf } from '../sync/merge'
 import { DEFAULT_SETTINGS, type InProgress, type Session, type SharedState, type SyncedSettings } from './types'
 
@@ -14,6 +15,7 @@ export interface LocalConfig {
   /** Sound is per device: the TV and the laptop have very different speakers. */
   sound: boolean
   volume: number
+  soundStyle: SoundStyle
 }
 
 interface AppState {
@@ -57,7 +59,7 @@ export const useApp = create<AppState>()(
         inProgress: null,
         inProgressUpdatedAt: 0,
       },
-      config: { owner: 'shxch', repo: 'typing-data', token: '', device: guessDevice(), sound: true, volume: 0.6 },
+      config: { owner: 'shxch', repo: 'typing-data', token: '', device: guessDevice(), sound: true, volume: 0.6, soundStyle: 'keyboard' },
       shas: {},
       dirtyMonths: [],
       remoteStamp: { settings: 0, inProgress: 0 },

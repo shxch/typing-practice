@@ -58,11 +58,57 @@ function tone({ freq, to, type = 'sine', gain, attack = 0.004, decay, delay = 0 
 /** C major pentatonic, two octaves up: every note sounds good next to every other. */
 const PENTA = [1046.5, 1174.7, 1318.5, 1568.0, 1760.0]
 
-/** Correct key: a soft, woody "pop" with a tiny random pitch so it never sounds mechanical. */
-export function playCorrect(isSpace = false) {
-  const base = isSpace ? 520 : 780 + Math.random() * 60
-  tone({ freq: base * 1.6, to: base, gain: 0.07, decay: 0.07 })
-  tone({ freq: base * 3, gain: 0.012, decay: 0.03 })
+export type SoundStyle = 'keyboard' | 'kalimba' | 'wood'
+
+let noise: AudioBuffer | null = null
+
+/** A short burst of filtered noise: the "click" part of a key. */
+function click(freq: number, q: number, gain: number, decay: number) {
+  const a = audio()
+  if (!a || volume === 0) return
+  if (!noise) {
+    noise = a.ctx.createBuffer(1, Math.floor(a.ctx.sampleRate * 0.1), a.ctx.sampleRate)
+    const data = noise.getChannelData(0)
+    for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1
+  }
+  const t = a.ctx.currentTime
+  const src = a.ctx.createBufferSource()
+  src.buffer = noise
+  const bp = a.ctx.createBiquadFilter()
+  bp.type = 'bandpass'
+  bp.frequency.value = freq
+  bp.Q.value = q
+  const g = a.ctx.createGain()
+  g.gain.setValueAtTime(0.0001, t)
+  g.gain.exponentialRampToValueAtTime(gain, t + 0.002)
+  g.gain.exponentialRampToValueAtTime(0.0001, t + decay)
+  src.connect(bp).connect(g).connect(a.out)
+  src.start(t)
+  src.stop(t + decay + 0.02)
+}
+
+/** Kalimba walks up and down the pentatonic scale, so a run of correct keys makes a little tune. */
+const KALIMBA = [523.3, 587.3, 659.3, 784.0, 880.0, 1046.5, 880.0, 784.0, 659.3, 587.3]
+let kalimbaStep = 0
+
+/** Correct key, in the chosen style. Space gets a slightly lower, rounder variant. */
+export function playCorrect(style: SoundStyle = 'keyboard', isSpace = false) {
+  const jitter = 1 + (Math.random() - 0.5) * 0.06
+  if (style === 'keyboard') {
+    // A soft, muted "thock": low body + a quiet, dark click.
+    const body = (isSpace ? 110 : 150) * jitter
+    tone({ freq: body * 1.4, to: body, gain: 0.16, attack: 0.002, decay: 0.05 })
+    click((isSpace ? 1200 : 1700) * jitter, 0.9, 0.18, 0.03)
+  } else if (style === 'kalimba') {
+    const f = (isSpace ? KALIMBA[0] / 2 : KALIMBA[kalimbaStep++ % KALIMBA.length])
+    tone({ freq: f, gain: 0.07, attack: 0.003, decay: 0.35 })
+    tone({ freq: f * 4.07, gain: 0.008, attack: 0.002, decay: 0.08 })
+  } else {
+    // Wood block: a short, hollow knock.
+    const f = (isSpace ? 520 : 760) * jitter
+    tone({ freq: f, type: 'triangle', gain: 0.1, attack: 0.001, decay: 0.045 })
+    click(f * 2.2, 3, 0.06, 0.02)
+  }
 }
 
 /** Wrong key: a low, muffled "boop" — noticeable, never harsh. */
