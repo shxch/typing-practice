@@ -1,6 +1,10 @@
 // Backgrounds: built-in gradients plus every image in src/assets/wallpapers/
 // (added with scripts/add-wallpapers.py; picked up automatically at build time).
 // File names are "<group>-<name>", e.g. "kirby-autumn.jpg".
+// Wallpapers added in the app itself come from wallpapers/custom.ts.
+
+import { useApp } from '../store/app'
+import { useCustomWallpapers } from '../wallpapers/custom'
 
 export interface Wallpaper {
   id: string
@@ -50,16 +54,32 @@ const PHOTOS: Wallpaper[] = Object.keys(FULL)
     }
   })
 
-export const WALLPAPERS: Wallpaper[] = [...GRADIENTS, ...PHOTOS]
+export const BUILT_IN: Wallpaper[] = [...GRADIENTS, ...PHOTOS]
+export const DEFAULT_WALLPAPER = GRADIENTS[0]
 
-export function findWallpaper(id: string): Wallpaper {
-  return WALLPAPERS.find((w) => w.id === id) ?? GRADIENTS[0]
+/** Every wallpaper the picker offers: the user's own first, then built-ins they haven't hidden. */
+export function useWallpapers(): Wallpaper[] {
+  const custom = useCustomWallpapers()
+  const hidden = useApp((s) => s.shared.settings.hiddenWallpapers)
+  const mine: Wallpaper[] = custom.map((c) => ({
+    id: 'img-' + c.id,
+    name: c.name,
+    group: 'mine',
+    css: c.url ? `url("${c.url}")` : DEFAULT_WALLPAPER.css,
+    url: c.url,
+    thumb: c.thumb,
+  }))
+  return [...mine, ...BUILT_IN.filter((w) => !hidden.includes(w.id))]
 }
 
-/** Groups in display order: gradients first, then image series alphabetically. */
-export function wallpaperGroups(): { group: string; items: Wallpaper[] }[] {
-  const groups = Array.from(new Set(WALLPAPERS.map((w) => w.group)))
-  return groups.map((group) => ({ group, items: WALLPAPERS.filter((w) => w.group === group) }))
+export function findWallpaper(list: Wallpaper[], id: string): Wallpaper {
+  return list.find((w) => w.id === id) ?? DEFAULT_WALLPAPER
+}
+
+/** Groups in display order: the user's own, gradients, then image series alphabetically. */
+export function groupWallpapers(list: Wallpaper[]): { group: string; items: Wallpaper[] }[] {
+  const groups = Array.from(new Set(['mine', ...list.map((w) => w.group)]))
+  return groups.map((group) => ({ group, items: list.filter((w) => w.group === group) }))
 }
 
 export type Fit =

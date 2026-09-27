@@ -37,6 +37,16 @@ export interface SyncedSettings {
   /** Wallpaper id (see content/wallpapers.ts). */
   wallpaper: string
   dailyGoalMinutes: number
+  /** Wallpapers added in the app; the images themselves live in the data repo. */
+  customWallpapers: CustomWallpaper[]
+  /** Built-in wallpapers the user removed from the picker. */
+  hiddenWallpapers: string[]
+}
+
+export interface CustomWallpaper {
+  id: string
+  name: string
+  addedAt: number
 }
 
 export type Lang = 'zh' | 'en'
@@ -51,6 +61,8 @@ export const DEFAULT_SETTINGS: SyncedSettings = {
   lang: 'zh',
   wallpaper: 'gradient-lavender',
   dailyGoalMinutes: 15,
+  customWallpapers: [],
+  hiddenWallpapers: [],
 }
 
 /** The small, frequently-changing part of the synced data (state.json). */

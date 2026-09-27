@@ -33,6 +33,8 @@ interface AppState {
   dirtyMonths: string[]
   /** Timestamps of the shared state as last seen on the remote. */
   remoteStamp: { settings: number; inProgress: number }
+  /** Wallpaper image uploads/deletions waiting for the data repo. */
+  wallpaperOps: { op: 'put' | 'delete'; id: string }[]
 
   // runtime only
   status: SyncStatus
@@ -66,6 +68,7 @@ export const useApp = create<AppState>()(
       shas: {},
       dirtyMonths: [],
       remoteStamp: { settings: 0, inProgress: 0 },
+      wallpaperOps: [],
       status: 'idle',
       statusMessage: '',
       lastSyncedAt: null,
@@ -102,6 +105,7 @@ export const useApp = create<AppState>()(
         shas: st.shas,
         dirtyMonths: st.dirtyMonths,
         remoteStamp: st.remoteStamp,
+        wallpaperOps: st.wallpaperOps,
       }),
       merge: (persisted, current) => {
         const p = persisted as Partial<AppState>
@@ -122,9 +126,10 @@ export const useApp = create<AppState>()(
 export const isConfigured = (c: LocalConfig) => Boolean(c.owner && c.repo && c.token)
 
 /** True when this device has changes the remote hasn't seen. */
-export function hasLocalChanges(st: Pick<AppState, 'dirtyMonths' | 'shared' | 'remoteStamp'>): boolean {
+export function hasLocalChanges(st: Pick<AppState, 'dirtyMonths' | 'shared' | 'remoteStamp' | 'wallpaperOps'>): boolean {
   return (
     st.dirtyMonths.length > 0 ||
+    st.wallpaperOps.length > 0 ||
     st.shared.settingsUpdatedAt > st.remoteStamp.settings ||
     st.shared.inProgressUpdatedAt > st.remoteStamp.inProgress
   )

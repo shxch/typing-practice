@@ -5,6 +5,7 @@ import { isConfigured, useApp } from '../store/app'
 import { GitHubClient, GitHubError } from './github'
 import { mergeSessions, mergeShared, monthOf } from './merge'
 import { syncOnce } from './syncer'
+import { flushWallpaperOps } from '../wallpapers/custom'
 
 let running: Promise<void> | null = null
 let again = false
@@ -70,6 +71,7 @@ async function runOnce() {
         lastSyncedAt: Date.now(),
       }
     })
+    await flushWallpaperOps(client)
   } catch (e) {
     if (e instanceof GitHubError) {
       const msg = e.status === 401 ? t().errTokenInvalid : e.status === 403 ? t().errTokenNoWrite : t().errGitHub(e.message)

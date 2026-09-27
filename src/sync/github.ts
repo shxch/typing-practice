@@ -55,13 +55,13 @@ export class GitHubClient {
     return `https://api.github.com/repos/${owner}/${repo}/contents/${path}`
   }
 
-  private async request(path: string, init: RequestInit = {}): Promise<Response> {
+  private async request(path: string, init: RequestInit = {}, accept = 'application/vnd.github+json'): Promise<Response> {
     const res = await this.fetchFn(this.url(path), {
       ...init,
       // GitHub caches GETs for 60s; we always want the latest data.
       cache: 'no-store',
       headers: {
-        Accept: 'application/vnd.github+json',
+        Accept: accept,
         Authorization: `Bearer ${this.cfg.token}`,
         'X-GitHub-Api-Version': '2022-11-28',
         ...(init.body ? { 'Content-Type': 'application/json' } : {}),
@@ -108,6 +108,39 @@ export class GitHubClient {
     if (res.status === 404) throw new GitHubError(404, '找不到数据仓库，请检查用户名、仓库名和 token 权限')
     const body = await res.json()
     return body.content.sha
+  }
+
+  /** Sha of a file, or null if it doesn't exist. */
+  async getSha(path: string): Promise<string | null> {
+    const res = await this.request(path)
+    if (res.status === 404) return null
+    return (await res.json()).sha
+  }
+
+  /** Raw file bytes (works for files over 1 MB too), or null if missing. */
+  async getBlob(path: string): Promise<Blob | null> {
+    const res = await this.request(path, {}, 'application/vnd.github.raw+json')
+    if (res.status === 404) return null
+    return res.blob()
+  }
+
+  /** Create or replace a binary file. */
+  async putBlob(path: string, blob: Blob, message: string): Promise<void> {
+    const bytes = new Uint8Array(await blob.arrayBuffer())
+    let bin = ''
+    for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000))
+    const sha = await this.getSha(path)
+    await this.request(path, {
+      method: 'PUT',
+      body: JSON.stringify({ message, content: btoa(bin), ...(sha ? { sha } : {}) }),
+    })
+  }
+
+  /** Delete a file; missing files are fine. */
+  async deleteFile(path: string, message: string): Promise<void> {
+    const sha = await this.getSha(path)
+    if (!sha) return
+    await this.request(path, { method: 'DELETE', body: JSON.stringify({ message, sha }) })
   }
 
   /** Cheap call to verify the token can see the repo. */

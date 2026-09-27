@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Background, useWallpaperFit } from './components/Background'
 import { SyncBadge } from './components/SyncBadge'
-import { findWallpaper } from './content/wallpapers'
+import { findWallpaper, useWallpapers } from './content/wallpapers'
 import { useT } from './i18n'
 import { Practice } from './pages/Practice'
 import { Settings } from './pages/Settings'
@@ -47,7 +47,8 @@ export default function App() {
     document.title = t.appTitle
   }, [lang, t])
 
-  const wallpaper = findWallpaper(wallpaperId)
+  const wallpapers = useWallpapers()
+  const wallpaper = findWallpaper(wallpapers, wallpaperId)
   const fit = useWallpaperFit(wallpaper)
 
   // Blur after clicking so a later Space/Enter doesn't re-trigger the button.
