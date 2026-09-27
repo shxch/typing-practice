@@ -7,11 +7,11 @@ const BUILT_IN: Record<string, string> = Object.fromEntries(
   ).map(([path, url]) => [path.replace(/^.*\//, '').replace(/\.[^.]+$/, ''), url]),
 )
 
-/** A badge's picture: the uploaded image if there is one, then the built-in picture, then the emoji icon. */
-export function BadgeIcon({ badge, url, size = 56, dim = false }: { badge: Badge; url?: string | null; size?: number; dim?: boolean }) {
+/** A badge's picture from src/assets/badges, or its emoji icon if there is none. */
+export function BadgeIcon({ badge, size = 56, dim = false }: { badge: Badge; size?: number; dim?: boolean }) {
   const style = { width: size, height: size }
   const faded = dim ? 'grayscale opacity-35' : ''
-  const src = url || BUILT_IN[badge.id]
+  const src = BUILT_IN[badge.id]
   if (src) {
     return <img src={src} alt="" draggable={false} className={`object-contain drop-shadow ${faded}`} style={style} />
   }
