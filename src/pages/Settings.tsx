@@ -46,8 +46,9 @@ export function Settings() {
   const t = useT()
   const [check, setCheck] = useState<string>('')
 
-  const earned = computeProgress(Object.values(sessions), { ...settings, manualUnits: null }).earnedUnits
-  const units = settings.manualUnits ?? earned
+  const progress = computeProgress(Object.values(sessions), settings)
+  const earned = progress.earnedUnits
+  const units = progress.unlockedUnits
   const stageName = { A: t.stageA, B: t.stageB, C: t.stageC }
 
   async function testConnection() {
@@ -252,7 +253,11 @@ export function Settings() {
           min={1}
           max={UNITS.length}
           value={units}
-          onChange={(e) => updateSettings({ manualUnits: Number(e.target.value) })}
+          onChange={(e) => {
+            // Jumping ahead only: the slider can't go below what practice has already unlocked.
+            const v = Math.max(earned, Number(e.target.value))
+            updateSettings({ manualUnits: v > earned ? v : null })
+          }}
           className="w-full accent-theme-600"
         />
         <div className="flex flex-wrap gap-1.5">

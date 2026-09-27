@@ -28,13 +28,18 @@ export interface UnlockSettings {
   targetAccuracy: number
   /** Minimum clean, timed hits before a key's speed is trusted. */
   minSamples: number
-  /** When set, overrides the computed number of unlocked units. */
+  /**
+   * Jump ahead: start from at least this many units. Automatic unlocking carries on from
+   * there, so it never gets stuck at the manual position.
+   */
   manualUnits: number | null
 }
 
 export interface SessionLike {
   startedAt: number
   keyStats: KeyStats
+  /** Units unlocked when this round was played. Unlocks never go backwards past it. */
+  units?: number
 }
 
 /** Smoothed per-key performance across sessions. */
@@ -48,7 +53,7 @@ export interface KeyPerf {
 
 export interface Progress {
   unlockedUnits: number
-  /** Unlocked units according to the sessions alone (ignores manualUnits). */
+  /** Units unlocked without the manual jump (practice results and past rounds only). */
   earnedUnits: number
   unlocked: Set<string>
   stage: Stage
@@ -60,15 +65,33 @@ export interface Progress {
   done: boolean
 }
 
+/**
+ * Smoothing: how much a round moves a key's average. It scales with how often the key came
+ * up in that round — ALPHA per REF_HITS hits — so a round with one stray "q" barely moves
+ * the needle while a round full of them counts properly.
+ */
 const ALPHA = 0.3
+const REF_HITS = 10
+const MAX_WEIGHT = 0.8
+
+const weightFor = (hits: number) => Math.min(MAX_WEIGHT, 1 - (1 - ALPHA) ** (hits / REF_HITS))
+
+/** Characters that need Shift. They're naturally slower, so they get extra time. */
+export const SHIFTED = new Set([...'ABCDEFGHIJKLMNOPQRSTUVWXYZ', '!', '?', '"', ':', '(', ')'])
+export const SHIFT_SLACK = 1.3
+
+/** Target milliseconds per hit for a character. */
+export function targetMs(ch: string, s: Pick<UnlockSettings, 'targetWpm'>): number {
+  return wpmToMs(s.targetWpm) * (SHIFTED.has(ch) ? SHIFT_SLACK : 1)
+}
 
 export function unitChars(count: number): Set<string> {
   return new Set(UNITS.slice(0, count).flatMap((u) => u.chars))
 }
 
-export function meetsTarget(p: KeyPerf | undefined, s: UnlockSettings): boolean {
+export function meetsTarget(ch: string, p: KeyPerf | undefined, s: UnlockSettings): boolean {
   if (!p || p.samples < s.minSamples || p.ms === null || p.acc === null) return false
-  return p.ms <= wpmToMs(s.targetWpm) && p.acc >= s.targetAccuracy
+  return p.ms <= targetMs(ch, s) && p.acc >= s.targetAccuracy
 }
 
 function updatePerf(keys: Record<string, KeyPerf>, stats: KeyStats) {
@@ -78,29 +101,42 @@ function updatePerf(keys: Record<string, KeyPerf>, stats: KeyStats) {
     const next = { ...cur, samples: cur.samples + st.t }
     if (st.t > 0) {
       const ms = st.ms / st.t
-      next.ms = cur.ms === null ? ms : ALPHA * ms + (1 - ALPHA) * cur.ms
+      const w = weightFor(st.t)
+      next.ms = cur.ms === null ? ms : w * ms + (1 - w) * cur.ms
     }
     if (tries > 0) {
       const acc = st.n / tries
-      next.acc = cur.acc === null ? acc : ALPHA * acc + (1 - ALPHA) * cur.acc
+      const w = weightFor(tries)
+      next.acc = cur.acc === null ? acc : w * acc + (1 - w) * cur.acc
     }
     keys[ch] = next
   }
 }
 
-/** Replay sessions in time order, unlocking the next unit whenever all unlocked keys meet the target. */
+const clampUnits = (n: number) => Math.min(UNITS.length, Math.max(1, Math.round(n)))
+
+/**
+ * Replay sessions in time order, unlocking the next unit whenever every unlocked key meets
+ * the target. Unlocks only ever move forward: each round records how far it was, so raising
+ * the target later never takes keys away.
+ */
 export function computeProgress(sessions: SessionLike[], s: UnlockSettings): Progress {
-  const keys: Record<string, KeyPerf> = {}
-  let earned = 1
-  const sorted = [...sessions].sort((a, b) => a.startedAt - b.startedAt)
-  for (const session of sorted) {
-    updatePerf(keys, session.keyStats)
-    while (earned < UNITS.length && [...unitChars(earned)].every((c) => meetsTarget(keys[c], s))) {
-      earned++
+  const replay = (start: number) => {
+    const keys: Record<string, KeyPerf> = {}
+    let units = start
+    const sorted = [...sessions].sort((a, b) => a.startedAt - b.startedAt)
+    for (const session of sorted) {
+      units = Math.max(units, clampUnits(session.units ?? 1))
+      updatePerf(keys, session.keyStats)
+      while (units < UNITS.length && [...unitChars(units)].every((c) => meetsTarget(c, keys[c], s))) {
+        units++
+      }
     }
+    return { keys, units }
   }
 
-  const unlockedUnits = Math.min(UNITS.length, Math.max(1, s.manualUnits ?? earned))
+  const auto = replay(1)
+  const { keys, units: unlockedUnits } = s.manualUnits !== null && s.manualUnits > auto.units ? replay(clampUnits(s.manualUnits)) : auto
   const unlocked = unitChars(unlockedUnits)
   const stage = UNITS[unlockedUnits - 1].stage
 
@@ -110,15 +146,15 @@ export function computeProgress(sessions: SessionLike[], s: UnlockSettings): Pro
   // Weakest first; on a tie the most recently unlocked key wins.
   const weak = all
     .map((c, i) => ({ c, i }))
-    .filter(({ c }) => !meetsTarget(keys[c], s))
-    .sort((a, b) => weakness(keys[b.c], s) - weakness(keys[a.c], s) || b.i - a.i)
+    .filter(({ c }) => !meetsTarget(c, keys[c], s))
+    .sort((a, b) => weakness(b.c, keys[b.c], s) - weakness(a.c, keys[a.c], s) || b.i - a.i)
     .map(({ c }) => c)
 
   // Even when every key is on target, keep polishing the slowest one.
-  const focus = weak[0] ?? slowest(all, keys)
+  const focus = weak[0] ?? slowest(all, keys, s)
   return {
     unlockedUnits,
-    earnedUnits: earned,
+    earnedUnits: auto.units,
     unlocked,
     stage,
     keys,
@@ -128,22 +164,24 @@ export function computeProgress(sessions: SessionLike[], s: UnlockSettings): Pro
   }
 }
 
-/** Higher = needs more practice. Unpracticed keys come first. */
-function weakness(p: KeyPerf | undefined, s: UnlockSettings): number {
+/** Higher = needs more practice. Keys without enough practice yet come first. */
+function weakness(ch: string, p: KeyPerf | undefined, s: UnlockSettings): number {
   if (!p || p.ms === null || p.samples < s.minSamples) return 1000 - (p?.samples ?? 0)
-  const speed = p.ms / wpmToMs(s.targetWpm)
+  const speed = p.ms / targetMs(ch, s)
   const acc = s.targetAccuracy / Math.max(p.acc ?? 0, 0.5)
   return speed * acc
 }
 
-function slowest(chars: string[], keys: Record<string, KeyPerf>): string | null {
+/** Slowest key relative to its own target (so capitals aren't always picked just for needing Shift). */
+function slowest(chars: string[], keys: Record<string, KeyPerf>, s: UnlockSettings): string | null {
   let best: string | null = null
-  let bestMs = -1
+  let bestRatio = -1
   for (const c of chars) {
-    const ms = keys[c]?.ms ?? Infinity
-    if (ms > bestMs) {
+    const ms = keys[c]?.ms
+    const ratio = ms == null ? Infinity : ms / targetMs(c, s)
+    if (ratio > bestRatio) {
       best = c
-      bestMs = ms
+      bestRatio = ratio
     }
   }
   return best

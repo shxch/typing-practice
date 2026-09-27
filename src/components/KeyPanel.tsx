@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { msToWpm } from '../engine/typing'
 import { useT } from '../i18n'
-import { UNITS, meetsTarget, type Progress, type Stage, type UnlockSettings } from '../lessons/curriculum'
+import { UNITS, meetsTarget, targetMs, type Progress, type Stage, type UnlockSettings } from '../lessons/curriculum'
 import { byTime, keySpeedSeries, keySummary } from '../lessons/stats'
 import type { Session } from '../store/types'
 import { LineChart } from './charts/LineChart'
@@ -48,8 +48,9 @@ export function KeyPanel({ progress, sessions, settings, selected, onSelect }: P
                 .map((ch) => {
                   const open = progress.unlocked.has(ch)
                   const perf = progress.keys[ch]
-                  const ratio = open && perf?.ms ? msToWpm(perf.ms) / settings.targetWpm : null
-                  const done = open && meetsTarget(perf, settings)
+                  // Speed relative to this key's own target (keys needing Shift get extra time).
+                  const ratio = open && perf?.ms ? targetMs(ch, settings) / perf.ms : null
+                  const done = open && meetsTarget(ch, perf, settings)
                   const style = open ? tileStyle(ratio) : { background: 'var(--viz-grid)', color: '#b5b3ad' }
                   return (
                     <button

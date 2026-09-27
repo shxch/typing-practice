@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { KeyStats } from '../engine/typing'
-import { UNITS, computeProgress, type UnlockSettings } from './curriculum'
+import { SHIFT_SLACK, UNITS, computeProgress, meetsTarget, targetMs, type UnlockSettings } from './curriculum'
 
 const settings: UnlockSettings = { targetWpm: 20, targetAccuracy: 0.9, minSamples: 10, manualUnits: null }
 
@@ -58,22 +58,60 @@ describe('curriculum', () => {
   it('focuses on a weak key from an earlier stage', () => {
     const fast = 60000 / (25 * 5)
     const slow = 60000 / (10 * 5)
-    const letters = UNITS.filter((u) => u.stage === 'A').flatMap((u) => u.chars)
-    const good = session(1, [...letters, ...'ASDFJKLE'], fast)
-    const qSlipped = session(2, ['q'], slow)
-    const p = computeProgress([good, qSlipped], { ...settings, manualUnits: 20 })
-    expect(p.stage).toBe('B')
+    const everything = UNITS.flatMap((u) => u.chars)
+    const p = computeProgress([session(1, everything, fast), session(2, ['q'], slow)], settings)
+    expect(p.unlockedUnits).toBe(UNITS.length)
     expect(p.focus).toBe('q')
   })
 
   it('keeps a focus key even when everything is on target', () => {
     const fast = 60000 / (25 * 5)
-    const p = computeProgress([session(1, UNITS[0].chars, fast)], { ...settings, manualUnits: 1 })
+    const p = computeProgress([session(1, UNITS.flatMap((u) => u.chars), fast)], settings)
     expect(p.weak).toEqual([])
     expect(p.focus).not.toBeNull()
   })
 
-  it('honours the manual override', () => {
+  it('never takes unlocked keys away when the target is raised', () => {
+    const fast = 60000 / (25 * 5)
+    const played = { ...session(1, UNITS[0].chars, fast), units: 1 }
+    const later = { startedAt: 2, keyStats: {}, units: 2 } // a round played with 2 units unlocked
+    expect(computeProgress([played, later], settings).unlockedUnits).toBe(2)
+    // Much stricter target: the old sessions no longer qualify, but round 2 was played with 2 units.
+    expect(computeProgress([played, later], { ...settings, targetWpm: 80 }).unlockedUnits).toBe(2)
+  })
+
+  it('a manual jump is a starting point; unlocking carries on from there', () => {
+    const fast = 60000 / (25 * 5)
+    const p0 = computeProgress([], { ...settings, manualUnits: 5 })
+    expect(p0.unlockedUnits).toBe(5)
+    expect(p0.earnedUnits).toBe(1)
+    const chars = UNITS.slice(0, 5).flatMap((u) => u.chars)
+    const p1 = computeProgress([session(1, chars, fast)], { ...settings, manualUnits: 5 })
+    expect(p1.unlockedUnits).toBe(6)
+    // A jump below what's already earned changes nothing.
+    const p2 = computeProgress([session(1, UNITS[0].chars, fast)], { ...settings, manualUnits: 1 })
+    expect(p2.unlockedUnits).toBe(2)
+  })
+
+  it('a round with one stray hit barely moves a key', () => {
+    const fast = 60000 / (25 * 5)
+    const oneSlowHit = { startedAt: 2, keyStats: { a: { n: 1, miss: 0, t: 1, ms: 5000 } } }
+    const p = computeProgress([session(1, UNITS[0].chars, fast), oneSlowHit], settings)
+    expect(p.keys.a.ms!).toBeLessThan(fast * 1.5)
+    const manySlow = { startedAt: 2, keyStats: { a: { n: 20, miss: 0, t: 20, ms: 20 * 5000 } } }
+    expect(computeProgress([session(1, UNITS[0].chars, fast), manySlow], settings).keys.a.ms!).toBeGreaterThan(fast * 3)
+  })
+
+  it('gives keys that need Shift extra time', () => {
+    expect(targetMs('A', settings)).toBeCloseTo(targetMs('a', settings) * SHIFT_SLACK)
+    expect(targetMs('?', settings)).toBeGreaterThan(targetMs('.', settings))
+    const alittleSlow = targetMs('a', settings) * 1.2
+    const perf = { samples: 20, ms: alittleSlow, acc: 1 }
+    expect(meetsTarget('A', perf, settings)).toBe(true)
+    expect(meetsTarget('a', perf, settings)).toBe(false)
+  })
+
+  it('can jump straight to the capitals stage', () => {
     const p = computeProgress([], { ...settings, manualUnits: 20 })
     expect(p.stage).toBe('B')
     expect(p.unlocked.has('A')).toBe(true)

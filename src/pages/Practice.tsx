@@ -51,6 +51,7 @@ export function Practice() {
   const [fresh, setFresh] = useState<InProgress>(() => freshLesson(progress, settings.lessonWords, settings.errorMode, device))
   const [result, setResult] = useState<RoundResult | null>(null)
   const [imeWarning, setImeWarning] = useState(false)
+  const [capsLock, setCapsLock] = useState(false)
   const current = inProgress ?? fresh
 
   // Regenerate the untouched lesson when unlocks or settings change.
@@ -115,6 +116,12 @@ export function Practice() {
       const target = e.target as HTMLElement | null
       if (target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return
       if (e.ctrlKey || e.metaKey || e.altKey) return
+      if (e.getModifierState) setCapsLock(e.getModifierState('CapsLock'))
+      // Holding a key down auto-repeats it; that's never intended typing.
+      if (e.repeat) {
+        e.preventDefault()
+        return
+      }
 
       if (e.isComposing || e.key === 'Process') {
         setImeWarning(true)
@@ -201,6 +208,10 @@ export function Practice() {
             {t.newText}
           </button>
         </div>
+      )}
+
+      {capsLock && !result && (
+        <div className="rounded-xl bg-amber-50/95 border border-amber-300 px-4 py-3 text-amber-800">{t.capsLockWarning}</div>
       )}
 
       {imeWarning && (

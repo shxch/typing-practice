@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { UNITS, computeProgress, type UnlockSettings } from './curriculum'
-import { generateLesson } from './generate'
+import { WOF_NAMES, WOF_WORDS } from '../content/wof'
+import { baseOf, generateLesson } from './generate'
 
 /** Deterministic PRNG (mulberry32). */
 function rng(seed: number) {
@@ -27,6 +28,38 @@ describe('generateLesson', () => {
         expect(text).not.toMatch(/^ | $|  /)
       }
     }
+  })
+
+  it('never repeats a word within a lesson', () => {
+    for (let units = 1; units <= UNITS.length; units++) {
+      const p = computeProgress([], { ...base, manualUnits: units })
+      for (let seed = 1; seed <= 8; seed++) {
+        const words = generateLesson(p, 30, rng(seed * 31 + units)).split(' ').map(baseOf).filter(Boolean)
+        const dupes = words.filter((w, i) => words.indexOf(w) !== i)
+        expect(dupes, `units=${units} seed=${seed}`).toEqual([])
+      }
+    }
+  })
+
+  it('is about half Wings of Fire words once enough keys are unlocked', () => {
+    const wof = new Set([...WOF_WORDS, ...WOF_NAMES.map((n) => n.toLowerCase())])
+    for (const units of [19, 23, 33]) {
+      const p = computeProgress([], { ...base, manualUnits: units })
+      const words = generateLesson(p, 40, rng(units)).split(' ').map(baseOf).filter(Boolean)
+      const share = words.filter((w) => wof.has(w)).length / words.length
+      expect(share, `units=${units}`).toBeGreaterThanOrEqual(0.4)
+      expect(share, `units=${units}`).toBeLessThanOrEqual(0.65)
+    }
+  })
+
+  it('uses character names in lowercase before capitals are unlocked', () => {
+    const p = computeProgress([], { ...base, manualUnits: 19 }) // all lowercase letters
+    const names = new Set(WOF_NAMES.map((n) => n.toLowerCase()))
+    const seen = new Set<string>()
+    for (let seed = 1; seed <= 20; seed++) {
+      for (const w of generateLesson(p, 30, rng(seed)).split(' ')) if (names.has(w)) seen.add(w)
+    }
+    expect(seen.size).toBeGreaterThan(5)
   })
 
   it('leans on the focus key', () => {

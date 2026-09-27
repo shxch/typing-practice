@@ -16,6 +16,7 @@ const zh = {
   resumeBanner: (device: string) => `继续在「${device}」上没打完的练习，直接接着打就行～`,
   newText: '换一篇',
   imeWarning: '好像开着中文输入法，请切换到英文输入法再打字（Mac：按 Caps Lock 或 Ctrl+空格；Windows：按 Shift）。',
+  capsLockWarning: '⚠️ 大写锁定（Caps Lock）开着，按一下 Caps Lock 关掉它再打字。',
   hintStop: '打错了要打对才能继续',
   hintBackspace: '可以用退格键改错',
   hintStart: ' · 直接开始打字即可',
@@ -151,9 +152,9 @@ const zh = {
   modeBackspace: '继续，可用退格改',
 
   secCurriculum: '课程进度',
-  curriculumIntro: (n: number) => `按练习成绩自动解锁了 ${n} 组。需要时可以手动调整（比如直接跳到大写或标点）。`,
-  manualNote: '当前为手动设置。',
-  restoreAuto: '恢复自动解锁',
+  curriculumIntro: (n: number) => `按练习成绩已经解锁了 ${n} 组。可以往后跳（比如直接跳到大写或标点），跳过去以后仍然按成绩继续自动解锁；已经解锁的不会再被锁回去。`,
+  manualNote: '当前是手动跳过去的。',
+  restoreAuto: '取消跳级',
 }
 
 type Dict = typeof zh
@@ -174,6 +175,7 @@ const en: Dict = {
   newText: 'New text',
   imeWarning:
     'It looks like a Chinese input method is on. Switch to English input first (Mac: Caps Lock or Ctrl+Space; Windows: Shift).',
+  capsLockWarning: '⚠️ Caps Lock is on — press Caps Lock to turn it off before typing.',
   hintStop: 'Fix each mistake to continue',
   hintBackspace: 'Use Backspace to fix mistakes',
   hintStart: ' · Just start typing',
@@ -311,9 +313,9 @@ const en: Dict = {
   modeBackspace: 'Keep going, Backspace to fix',
 
   secCurriculum: 'Course progress',
-  curriculumIntro: (n) => `${n} groups unlocked from practice results. You can adjust this manually (e.g. jump to capitals or punctuation).`,
-  manualNote: 'Currently set manually.',
-  restoreAuto: 'Back to automatic',
+  curriculumIntro: (n) => `${n} groups unlocked by practice. You can jump ahead (e.g. to capitals or punctuation); unlocking then carries on automatically, and unlocked keys never get locked again.`,
+  manualNote: 'Jumped ahead manually.',
+  restoreAuto: 'Undo the jump',
 }
 
 export const DICTS: Record<Lang, Dict> = { zh, en }

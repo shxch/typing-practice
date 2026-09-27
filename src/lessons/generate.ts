@@ -1,44 +1,101 @@
-// Builds lesson text out of real words, using only unlocked keys and leaning on the focus key.
+// Builds lesson text from real words — half Wings of Fire vocabulary, half general words —
+// using only unlocked keys, leaning on the focus key, and never repeating a word in a lesson.
 
 import { CONTRACTIONS, HYPHENATED, PROPER_NOUNS, WORDS } from '../content/words'
+import { WOF_HYPHENATED, WOF_NAMES, WOF_SENTENCES, WOF_WORDS } from '../content/wof'
 import type { Progress } from './curriculum'
 
 export type Rng = () => number
 
-const pick = <T,>(arr: T[], rng: Rng): T => arr[Math.floor(rng() * arr.length)]
+/** Share of each lesson taken from Wings of Fire words; the rest are general words. */
+const WOF_SHARE = 0.5
+/** Below this many real words for the focus key, mix in drill syllables. */
+const MIN_FOCUS_WORDS = 12
 
-const onlyUses = (word: string, allowed: Set<string>) => [...word].every((c) => allowed.has(c))
+interface Cand {
+  word: string
+  /** From the Wings of Fire lists (vs. general words). */
+  wof: boolean
+}
 
+const onlyUses = (text: string, allowed: Set<string>) => [...text].every((c) => c === ' ' || allowed.has(c))
 const capitalize = (w: string) => w[0].toUpperCase() + w.slice(1)
+const isLower = (c: string | null): c is string => c !== null && /^[a-z]$/.test(c)
+const isUpper = (c: string | null): c is string => c !== null && /^[A-Z]$/.test(c)
 
-/** Pick `count` words, roughly `focusShare` of them containing the focus key, avoiding back-to-back repeats. */
-function pickWords(pool: string[], focus: string | null, count: number, rng: Rng, focusShare = 0.5): string[] {
-  const focused = focus ? pool.filter((w) => w.includes(focus)) : []
-  return pickFrom(pool, focused, count, rng, focusShare)
-}
+/** The word itself, ignoring case and punctuation: "Clay," and "clay" are the same word. */
+export const baseOf = (token: string) => token.toLowerCase().replace(/[^a-z]/g, '')
 
-function pickFrom(pool: string[], focused: string[], count: number, rng: Rng, focusShare: number): string[] {
-  const out: string[] = []
-  for (let i = 0; i < count; i++) {
-    const source = focused.length > 0 && rng() < focusShare ? focused : pool
-    let w = pick(source, rng)
-    for (let tries = 0; tries < 5 && out.length > 0 && w === out[out.length - 1]; tries++) {
-      w = pick(source, rng)
-    }
-    out.push(w)
+/**
+ * Picks words without repeats. Everything taken from one Picker is unique (case-insensitive),
+ * which is what keeps a lesson free of duplicates.
+ */
+class Picker {
+  private used = new Set<string>()
+  constructor(readonly rng: Rng) {}
+
+  isUsed(token: string) {
+    return this.used.has(baseOf(token))
   }
-  return out
+
+  mark(token: string) {
+    this.used.add(baseOf(token))
+  }
+
+  /** Up to `n` unused words, uniformly at random, without replacement. */
+  private sample(cands: Cand[], n: number): string[] {
+    if (n <= 0) return []
+    const fresh: string[] = []
+    const seen = new Set<string>()
+    for (const c of cands) {
+      const b = baseOf(c.word)
+      if (!b || this.used.has(b) || seen.has(b)) continue
+      seen.add(b)
+      fresh.push(c.word)
+    }
+    const out = this.shuffle(fresh).slice(0, n)
+    out.forEach((w) => this.mark(w))
+    return out
+  }
+
+  /**
+   * `n` unused words: half Wings of Fire, half general. If one side runs short (e.g. early on,
+   * when few letters are unlocked) the other side fills in.
+   */
+  take(cands: Cand[], n: number): string[] {
+    const wof = cands.filter((c) => c.wof)
+    const general = cands.filter((c) => !c.wof)
+    const a = this.sample(wof, Math.round(n * WOF_SHARE))
+    const b = this.sample(general, n - a.length)
+    const c = this.sample(wof, n - a.length - b.length)
+    return this.shuffle([...a, ...b, ...c])
+  }
+
+  shuffle<T>(arr: T[]): T[] {
+    const a = arr.slice()
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(this.rng() * (i + 1))
+      ;[a[i], a[j]] = [a[j], a[i]]
+    }
+    return a
+  }
+
+  pickOne<T>(arr: T[]): T | undefined {
+    return arr[Math.floor(this.rng() * arr.length)]
+  }
 }
 
-function lowercasePool(unlocked: Set<string>): string[] {
-  const pool = WORDS.filter((w) => onlyUses(w, unlocked))
-  // Very early on, fall back to short letter groups so there is always something to type.
-  if (pool.length >= 8) return pool
-  const letters = [...unlocked].filter((c) => /[a-z]/.test(c))
-  const extra = Array.from({ length: 30 }, (_, i) =>
-    Array.from({ length: 2 + (i % 3) }, (_, j) => letters[(i * 7 + j * 3) % letters.length]).join(''),
-  )
-  return [...pool, ...extra]
+/**
+ * Lowercase candidates made only of unlocked keys, tagged Wings of Fire or general (lessons take half of each).
+ * Characters' names join in lowercase ("clay", "qibli") only while
+ * their capitals can't be typed yet — after that they appear properly capitalized instead.
+ */
+function lowercaseCands(unlocked: Set<string>): Cand[] {
+  const lowerNames = WOF_NAMES.filter((n) => !onlyUses(n, unlocked)).map((n) => n.toLowerCase())
+  const wof = Array.from(new Set([...WOF_WORDS, ...lowerNames])).filter((w) => onlyUses(w, unlocked))
+  const wofSet = new Set(wof)
+  const general = WORDS.filter((w) => !wofSet.has(w) && onlyUses(w, unlocked))
+  return [...wof.map((word) => ({ word, wof: true })), ...general.map((word) => ({ word, wof: false }))]
 }
 
 const VOWELS = 'aeiou'
@@ -63,109 +120,135 @@ export function drillSyllables(focus: string, unlocked: Set<string>): string[] {
   return [...out]
 }
 
-/** Below this many real words for the focus key, mix in drill syllables. */
-const MIN_FOCUS_WORDS = 12
-
-/** Base words for a lesson; when the focus is a lowercase letter, lean on it (with drills if words are scarce). */
-function baseWords(p: Progress, count: number, rng: Rng): string[] {
-  const pool = lowercasePool(p.unlocked)
+/** `count` unique lowercase words; about half contain the focus letter if it's lowercase. */
+function lowercaseWords(p: Progress, count: number, pk: Picker): string[] {
+  if (count <= 0) return []
+  const cands = lowercaseCands(p.unlocked)
   const focus = p.focus
-  if (!focus || !/[a-z]/.test(focus)) return pickWords(pool, null, count, rng)
-  let focused = pool.filter((w) => w.includes(focus))
+  if (!isLower(focus)) return pk.take(cands, count)
+
+  let focused = cands.filter((c) => c.word.includes(focus))
   let share = 0.5
   if (focused.length < MIN_FOCUS_WORDS) {
-    focused = [...focused, ...focused, ...drillSyllables(focus, p.unlocked)]
+    focused = [...focused, ...drillSyllables(focus, p.unlocked).map((word) => ({ word, wof: false }))]
     share = 0.65
   }
-  return pickFrom(pool, focused, count, rng, share)
+  const withFocus = pk.take(focused, Math.round(count * share))
+  const rest = pk.take(cands, count - withFocus.length)
+  return pk.shuffle([...withFocus, ...rest])
 }
 
-/** Real words starting with the focus capital's letter, capitalized. */
-const capitalWords = (cap: string) => WORDS.filter((w) => w[0] === cap.toLowerCase()).map(capitalize)
-
-function stageA(p: Progress, count: number, rng: Rng): string {
-  return baseWords(p, count, rng).join(' ')
+/** Capitalized words and names, for the capitals stage and beyond. */
+function capitalCands(unlocked: Set<string>, first: (c: string) => boolean): Cand[] {
+  const names = [...WOF_NAMES.map((word) => ({ word, wof: true })), ...PROPER_NOUNS.map((word) => ({ word, wof: false }))]
+  const words = lowercaseCands(unlocked).map((c) => ({ word: capitalize(c.word), wof: c.wof }))
+  return [...names, ...words].filter((c) => first(c.word[0]) && onlyUses(c.word, unlocked))
 }
 
-function stageB(p: Progress, count: number, rng: Rng): string {
-  const caps = [...p.unlocked].filter((c) => /[A-Z]/.test(c))
-  const names = PROPER_NOUNS.filter((n) => caps.includes(n[0]) && onlyUses(n, p.unlocked))
-  const words = baseWords(p, count, rng)
-  const focusCap = p.focus && /[A-Z]/.test(p.focus) ? p.focus : null
-  const focusWords = focusCap ? capitalWords(focusCap) : []
-  const focusNames = focusCap ? names.filter((n) => n[0] === focusCap) : []
-
-  return words
-    .map((w, i) => {
-      const r = rng()
-      if (focusCap && r < 0.35) {
-        return focusNames.length > 0 && rng() < 0.4 ? pick(focusNames, rng) : pick(focusWords, rng)
-      }
-      if (r < 0.55 && names.length > 0) return pick(names, rng)
-      if (r < 0.7 && caps.includes(w[0].toUpperCase())) return capitalize(w)
-      return i === 0 && caps.includes(w[0].toUpperCase()) ? capitalize(w) : w
-    })
-    .join(' ')
+/** Words for stages B and C: lowercase words plus capitalized words and names. */
+function mixedWords(p: Progress, count: number, pk: Picker): string[] {
+  if (count <= 0) return []
+  const caps = new Set([...p.unlocked].filter((c) => /[A-Z]/.test(c)))
+  const focusCap = isUpper(p.focus) ? p.focus : null
+  const withFocusCap = focusCap ? pk.take(capitalCands(p.unlocked, (c) => c === focusCap), Math.round(count * 0.35)) : []
+  const otherCaps = pk.take(
+    capitalCands(p.unlocked, (c) => caps.has(c)),
+    Math.round(count * (focusCap ? 0.2 : 0.35)),
+  )
+  const lower = lowercaseWords(p, count - withFocusCap.length - otherCaps.length, pk)
+  return pk.shuffle([...withFocusCap, ...otherCaps, ...lower])
 }
 
 /** Ways a word can carry a punctuation mark. Sentence-ending marks are handled separately. */
-const DECORATE: Record<string, (w: string, rng: Rng) => string> = {
+type Decorate = (w: string, pk: Picker) => string | null
+const replaceWith =
+  (list: string[]): Decorate =>
+  (_w, pk) => {
+    const pick = pk.pickOne(list.filter((x) => !pk.isUsed(x)))
+    if (pick) pk.mark(pick)
+    return pick ?? null
+  }
+const contraction = replaceWith(CONTRACTIONS)
+const DECORATE: Record<string, Decorate> = {
   ',': (w) => `${w},`,
-  "'": (_w, rng) => pick(CONTRACTIONS, rng),
+  // Half contractions ("don't"), half possessives ("Clay's") so sentences still read naturally.
+  "'": (w, pk) => (pk.rng() < 0.5 && /^[A-Za-z]+[^s]$/.test(w) ? `${w}'s` : contraction(w, pk)),
   '"': (w) => `"${w}"`,
   ':': (w) => `${w}:`,
   ';': (w) => `${w};`,
-  '-': (_w, rng) => pick(HYPHENATED, rng),
+  '-': replaceWith([...WOF_HYPHENATED, ...HYPHENATED]),
   '(': (w) => `(${w})`,
   ')': (w) => `(${w})`,
 }
 const ENDINGS = ['.', '?', '!']
 
-function stageC(p: Progress, count: number, rng: Rng): string {
+/**
+ * Up to `max` Wings of Fire sentences that fit the unlocked keys and share no word with each
+ * other (or with anything already in the lesson). Sentences with the focus key come first.
+ */
+function storySentences(p: Progress, max: number, pk: Picker): string[] {
+  const fits = pk.shuffle(WOF_SENTENCES.filter((s) => onlyUses(s, p.unlocked)))
+  const focus = p.focus
+  const ordered = focus ? [...fits.filter((s) => s.includes(focus)), ...fits.filter((s) => !s.includes(focus))] : fits
+  const out: string[] = []
+  for (const s of ordered) {
+    if (out.length >= max) break
+    const words = s.split(' ').map(baseOf).filter(Boolean)
+    if (new Set(words).size !== words.length || words.some((w) => pk.isUsed(w))) continue
+    words.forEach((w) => pk.mark(w))
+    out.push(s)
+  }
+  return out
+}
+
+function sentences(p: Progress, count: number, pk: Picker): string {
+  const rng = pk.rng
   const unlocked = p.unlocked
-  const words = baseWords(p, count, rng)
-  const focusCap = p.focus && /[A-Z]/.test(p.focus) ? p.focus : null
-  const focusCapWords = focusCap ? capitalWords(focusCap) : []
+  // A couple of story sentences, then generated sentences for the rest of the words.
+  const story = storySentences(p, count >= 16 ? 2 : 1, pk)
+  const storyWords = story.reduce((n, s) => n + s.split(' ').length, 0)
+  const words = mixedWords(p, Math.max(0, count - storyWords), pk)
   const marks = Object.keys(DECORATE).filter((m) => unlocked.has(m))
   const endings = ENDINGS.filter((m) => unlocked.has(m))
   const focus = p.focus
   const focusIsEnding = focus !== null && ENDINGS.includes(focus)
+  const focusDecor = focus !== null ? DECORATE[focus] : undefined
 
-  const out: string[] = []
-  let sentenceLen = 0
+  const generated: string[] = []
+  let current: string[] = []
   let target = 4 + Math.floor(rng() * 4)
   for (let i = 0; i < words.length; i++) {
-    let w = sentenceLen === 0 ? capitalize(words[i]) : words[i]
-    if (focusCap && sentenceLen > 0 && rng() < 0.35) w = pick(focusCapWords, rng)
+    const start = current.length === 0
+    let w = start ? capitalize(words[i]) : words[i]
     const last = i === words.length - 1
-    if (sentenceLen + 1 >= target || last) {
-      const end = focusIsEnding && rng() < 0.6 ? focus! : pick(endings, rng)
-      out.push(w + end)
-      sentenceLen = 0
+    if (!start && (current.length + 1 >= target || last)) {
+      const end = focusIsEnding && rng() < 0.6 ? focus! : pk.pickOne(endings)!
+      generated.push([...current, w + end].join(' '))
+      current = []
       target = focusIsEnding ? 2 + Math.floor(rng() * 3) : 4 + Math.floor(rng() * 4)
       continue
     }
-    const wantFocus = focus !== null && DECORATE[focus] && rng() < 0.4
-    if (wantFocus) {
-      w = DECORATE[focus!](w, rng)
-    } else if (marks.length > 0 && rng() < 0.15) {
-      w = DECORATE[pick(marks, rng)](w, rng)
-    }
+    let decorated: string | null = null
+    if (focusDecor && rng() < 0.4) decorated = focusDecor(w, pk)
+    else if (marks.length > 0 && rng() < 0.15) decorated = DECORATE[pk.pickOne(marks)!](w, pk)
+    if (decorated) w = decorated
     // Keep the first word of a sentence capitalized even after decoration.
-    if (sentenceLen === 0 && /^[a-z]/.test(w)) w = capitalize(w)
-    out.push(w)
-    sentenceLen++
+    if (start && /^[a-z]/.test(w)) w = capitalize(w)
+    current.push(w)
+    // A lone last word still needs to end its sentence.
+    if (last) generated.push(current.join(' ') + (pk.pickOne(endings) ?? ''))
   }
-  return out.join(' ')
+  return pk.shuffle([...story, ...generated]).join(' ')
 }
 
 export function generateLesson(p: Progress, wordCount: number, rng: Rng = Math.random): string {
+  const pk = new Picker(rng)
   switch (p.stage) {
     case 'A':
-      return stageA(p, wordCount, rng)
+      return lowercaseWords(p, wordCount, pk).join(' ')
     case 'B':
-      return stageB(p, wordCount, rng)
+      return mixedWords(p, wordCount, pk).join(' ')
     case 'C':
-      return stageC(p, wordCount, rng)
+      return sentences(p, wordCount, pk)
   }
 }
