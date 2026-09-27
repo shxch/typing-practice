@@ -34,7 +34,7 @@ interface AppState {
   /** Timestamps of the shared state as last seen on the remote. */
   remoteStamp: { settings: number; inProgress: number }
   /** Wallpaper image uploads/deletions waiting for the data repo. */
-  wallpaperOps: { op: 'put' | 'delete'; id: string }[]
+  wallpaperOps: { op: 'put' | 'delete'; id: string; kind?: 'wallpaper' | 'badge' }[]
 
   // runtime only
   status: SyncStatus

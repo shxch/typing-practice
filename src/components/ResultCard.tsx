@@ -1,6 +1,8 @@
 import { msToWpm } from '../engine/typing'
 import { useT } from '../i18n'
 import type { Badge } from '../rewards/badges'
+import { useBadgeImages } from '../wallpapers/custom'
+import { BadgeIcon } from './BadgeIcon'
 import { useApp } from '../store/app'
 
 export interface RoundResult {
@@ -18,6 +20,7 @@ export interface RoundResult {
 export function ResultCard({ result, onNext }: { result: RoundResult; onNext: () => void }) {
   const t = useT()
   const lang = useApp((s) => s.shared.settings.lang)
+  const badgeImages = useBadgeImages()
   const show = (ch: string) => (ch === ' ' ? t.space : ch)
   return (
     <div className="rounded-2xl bg-white/85 backdrop-blur shadow-lg p-8 text-center space-y-6">
@@ -47,7 +50,7 @@ export function ResultCard({ result, onNext }: { result: RoundResult; onNext: ()
           <div className="flex flex-wrap justify-center gap-4">
             {result.badges.map((b, i) => (
               <div key={b.id} className="flex flex-col items-center animate-[pop_400ms_ease-out_both]" style={{ animationDelay: `${300 + i * 150}ms` }}>
-                <span className="text-4xl drop-shadow">{b.icon}</span>
+                <BadgeIcon badge={b} url={badgeImages[b.id]} size={52} />
                 <span className="text-sm font-semibold">{b.name[lang]}</span>
               </div>
             ))}

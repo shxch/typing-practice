@@ -41,6 +41,8 @@ export interface SyncedSettings {
   customWallpapers: CustomWallpaper[]
   /** Built-in wallpapers the user removed from the picker. */
   hiddenWallpapers: string[]
+  /** Badges with a picture the user uploaded: badge id → version (upload time). */
+  badgeImages: Record<string, number>
 }
 
 export interface CustomWallpaper {
@@ -63,6 +65,7 @@ export const DEFAULT_SETTINGS: SyncedSettings = {
   dailyGoalMinutes: 15,
   customWallpapers: [],
   hiddenWallpapers: [],
+  badgeImages: {},
 }
 
 /** The small, frequently-changing part of the synced data (state.json). */
