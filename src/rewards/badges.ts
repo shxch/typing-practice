@@ -71,8 +71,9 @@ export const BADGES: Badge[] = [
     [500, '👑', '龙族传奇', 'Dragon Legend', '完成 500 轮练习', 'Finish 500 rounds'],
   ]),
   ...tiers('speed', (c) => c.bestWpm, [
-    [10, '🪶', '展开翅膀', 'Spread Your Wings', '单轮速度达到 10 WPM', 'Reach 10 WPM in a round'],
-    [20, '🌿', 'RainWing 之速', 'RainWing Speed', '单轮速度达到 20 WPM', 'Reach 20 WPM in a round'],
+    // Slowest to fastest, as in the books: easygoing RainWings first, SkyWings (the fastest fliers) last.
+    [10, '🦎', 'RainWing 慢慢飞', 'RainWing Glide', '单轮速度达到 10 WPM', 'Reach 10 WPM in a round'],
+    [20, '🍃', 'LeafWing 之速', 'LeafWing Speed', '单轮速度达到 20 WPM', 'Reach 20 WPM in a round'],
     [30, '🌊', 'SeaWing 之速', 'SeaWing Speed', '单轮速度达到 30 WPM', 'Reach 30 WPM in a round'],
     [40, '🏜️', 'SandWing 之速', 'SandWing Speed', '单轮速度达到 40 WPM', 'Reach 40 WPM in a round'],
     [50, '☁️', 'SkyWing 之速', 'SkyWing Speed', '单轮速度达到 50 WPM', 'Reach 50 WPM in a round'],
