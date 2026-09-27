@@ -16,6 +16,9 @@ export interface LocalConfig {
   sound: boolean
   volume: number
   soundStyle: SoundStyle
+  /** Layout preferences, per device. */
+  showKeyboard: boolean
+  showKeyStats: boolean
 }
 
 interface AppState {
@@ -59,7 +62,7 @@ export const useApp = create<AppState>()(
         inProgress: null,
         inProgressUpdatedAt: 0,
       },
-      config: { owner: 'shxch', repo: 'typing-data', token: '', device: guessDevice(), sound: true, volume: 0.6, soundStyle: 'keyboard' },
+      config: { owner: 'shxch', repo: 'typing-data', token: '', device: guessDevice(), sound: true, volume: 0.6, soundStyle: 'keyboard', showKeyboard: true, showKeyStats: true },
       shas: {},
       dirtyMonths: [],
       remoteStamp: { settings: 0, inProgress: 0 },

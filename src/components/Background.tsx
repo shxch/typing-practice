@@ -1,54 +1,75 @@
 import { useEffect, useState } from 'react'
-import type { Wallpaper } from '../content/wallpapers'
+import { fitFor, type Fit, type Wallpaper } from '../content/wallpapers'
 
-/** If the image and screen shapes differ by more than this, show the whole image instead of cropping it. */
-const MAX_CROP_RATIO = 1.3
-
-function useViewportAspect() {
-  const [aspect, setAspect] = useState(() => window.innerWidth / window.innerHeight)
+export function useViewport() {
+  const [size, setSize] = useState(() => ({ w: window.innerWidth, h: window.innerHeight }))
   useEffect(() => {
-    const onResize = () => setAspect(window.innerWidth / window.innerHeight)
+    const onResize = () => setSize({ w: window.innerWidth, h: window.innerHeight })
     window.addEventListener('resize', onResize)
     return () => window.removeEventListener('resize', onResize)
   }, [])
-  return aspect
+  return size
 }
 
-function useImageAspect(url: string | null) {
-  const [aspect, setAspect] = useState<number | null>(null)
+const aspectCache = new Map<string, number>()
+
+/** Width / height of an image, once loaded (cached per URL). */
+export function useImageAspect(url: string | null) {
+  const [aspect, setAspect] = useState<number | null>(() => (url ? aspectCache.get(url) ?? null : null))
   useEffect(() => {
+    if (!url) return setAspect(null)
+    if (aspectCache.has(url)) return setAspect(aspectCache.get(url)!)
     setAspect(null)
-    if (!url) return
     const img = new Image()
-    img.onload = () => setAspect(img.naturalWidth / img.naturalHeight)
+    img.onload = () => {
+      aspectCache.set(url, img.naturalWidth / img.naturalHeight)
+      setAspect(img.naturalWidth / img.naturalHeight)
+    }
     img.src = url
   }, [url])
   return aspect
 }
 
-/**
- * Fixed full-screen background.
- * Wallpapers come in any size: when the image is roughly screen-shaped it simply covers the
- * screen; when it's much taller or wider (e.g. a portrait picture on a TV) it is shown whole,
- * centered, over a blurred, enlarged copy of itself so there are no empty bars.
- */
-export function Background({ wallpaper }: { wallpaper: Wallpaper }) {
-  const url = wallpaper.photo ? wallpaper.css.match(/url\("(.*)"\)/)?.[1] ?? null : null
-  const viewport = useViewportAspect()
-  const image = useImageAspect(url)
-  const mismatch = image !== null && Math.max(image / viewport, viewport / image) > MAX_CROP_RATIO
+/** How the wallpaper sits on this screen; the page layout uses it to make room for a side picture. */
+export function useWallpaperFit(w: Wallpaper): Fit {
+  const { w: sw, h: sh } = useViewport()
+  // The thumbnail has the same shape and loads much faster than the full picture.
+  const aspect = useImageAspect(w.thumb)
+  return w.url ? fitFor(aspect, sw, sh) : { mode: 'cover' }
+}
 
-  const layer = 'fixed inset-0 -z-10 bg-center bg-no-repeat'
-  if (!mismatch) {
-    return <div className={`${layer} bg-cover`} style={{ backgroundImage: wallpaper.css, backgroundColor: '#f5f3ff' }} />
+/** The picture layers for a given fit. Used full-screen (fixed) and in the picker previews (absolute). */
+export function WallpaperLayers({ wallpaper, fit, url, fixed }: { wallpaper: Wallpaper; fit: Fit; url: string | null; fixed: boolean }) {
+  const pos = fixed ? 'fixed' : 'absolute'
+  const bg = url ? `url("${url}")` : wallpaper.css
+  if (fit.mode === 'cover') {
+    return <div className={`${pos} inset-0 bg-cover bg-center`} style={{ backgroundImage: bg, backgroundColor: '#f5f3ff' }} />
   }
   return (
     <>
+      {/* Soft, blurred copy fills the screen behind the page. */}
+      <div className={`${pos} inset-0 overflow-hidden`} style={{ backgroundColor: '#f5f3ff' }}>
+        <div className="absolute -inset-10 bg-cover bg-center blur-2xl saturate-150 opacity-80" style={{ backgroundImage: bg }} />
+      </div>
+      {/* The whole picture, sharp, on the right; its left edge fades into the blur. */}
       <div
-        className={`${layer} bg-cover scale-110 blur-2xl brightness-90`}
-        style={{ backgroundImage: wallpaper.css, backgroundColor: '#f5f3ff' }}
+        className={`${pos} top-0 bottom-0 right-0 bg-contain bg-right bg-no-repeat`}
+        style={{
+          width: fixed ? fit.width : `${fit.width}px`,
+          backgroundImage: bg,
+          maskImage: 'linear-gradient(to right, transparent, black 10%)',
+          WebkitMaskImage: 'linear-gradient(to right, transparent, black 10%)',
+        }}
       />
-      <div className={`${layer} bg-contain`} style={{ backgroundImage: wallpaper.css }} />
     </>
+  )
+}
+
+/** Fixed full-screen background behind the app. */
+export function Background({ wallpaper, fit }: { wallpaper: Wallpaper; fit: Fit }) {
+  return (
+    <div className="-z-10 fixed inset-0">
+      <WallpaperLayers wallpaper={wallpaper} fit={fit} url={wallpaper.url} fixed />
+    </div>
   )
 }

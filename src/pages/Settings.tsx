@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react'
-import { WALLPAPERS } from '../content/wallpapers'
+import { WallpaperPicker } from '../components/WallpaperPicker'
 import { useT } from '../i18n'
 import { UNITS, computeProgress, unitLabel } from '../lessons/curriculum'
 import { playCorrect, playError, playFinish, type SoundStyle } from '../sound/sound'
@@ -94,19 +94,7 @@ export function Settings() {
 
         <div className="space-y-2">
           <div className="text-slate-600">{t.wallpaper}</div>
-          <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-            {WALLPAPERS.map((w) => (
-              <button
-                key={w.id}
-                onClick={() => updateSettings({ wallpaper: w.id })}
-                title={w.name}
-                className={`aspect-video rounded-xl bg-cover bg-center border-2 transition ${
-                  settings.wallpaper === w.id ? 'border-violet-600 ring-4 ring-violet-200' : 'border-white/70 hover:border-violet-300'
-                }`}
-                style={{ backgroundImage: w.thumb }}
-              />
-            ))}
-          </div>
+          <WallpaperPicker value={settings.wallpaper} onChange={(id) => updateSettings({ wallpaper: id })} />
         </div>
 
         <Field label={t.soundOn} hint={t.soundHint}>
@@ -187,6 +175,16 @@ export function Settings() {
       </Section>
 
       <Section title={t.secPractice}>
+        <Field label={t.dailyGoal} hint={t.dailyGoalHint}>
+          <input
+            className={input}
+            type="number"
+            min={1}
+            max={120}
+            value={settings.dailyGoalMinutes}
+            onChange={(e) => updateSettings({ dailyGoalMinutes: clamp(e.target.value, 1, 120) })}
+          />
+        </Field>
         <Field label={t.targetWpm} hint={t.targetWpmHint}>
           <input
             className={input}

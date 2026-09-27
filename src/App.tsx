@@ -1,15 +1,16 @@
 import { useEffect, useState } from 'react'
-import { Background } from './components/Background'
+import { Background, useWallpaperFit } from './components/Background'
 import { SyncBadge } from './components/SyncBadge'
 import { findWallpaper } from './content/wallpapers'
 import { useT } from './i18n'
 import { Practice } from './pages/Practice'
 import { Settings } from './pages/Settings'
+import { Stats } from './pages/Stats'
 import { setVolume } from './sound/sound'
 import { hasLocalChanges, useApp } from './store/app'
 import { syncNow } from './sync/runner'
 
-type Page = 'practice' | 'settings'
+type Page = 'practice' | 'stats' | 'settings'
 
 /** Keep this device and the data repo in step: on open, on focus/blur, when back online, and periodically. */
 function useAutoSync() {
@@ -47,6 +48,7 @@ export default function App() {
   }, [lang, t])
 
   const wallpaper = findWallpaper(wallpaperId)
+  const fit = useWallpaperFit(wallpaper)
 
   // Blur after clicking so a later Space/Enter doesn't re-trigger the button.
   const blurAfter = (fn: () => void) => (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -64,13 +66,18 @@ export default function App() {
   )
 
   return (
-    <div className="min-h-screen relative isolate">
-      <Background wallpaper={wallpaper} />
+    <div
+      className="min-h-screen relative isolate"
+      // A portrait wallpaper sits on the right; the page moves into the space beside it.
+      style={{ marginRight: fit.mode === 'side' ? fit.width : 0 }}
+    >
+      <Background wallpaper={wallpaper} fit={fit} />
       <div className="max-w-5xl mx-auto px-6 pt-4">
         <header className="flex flex-wrap gap-3 items-center justify-between rounded-2xl bg-white/80 backdrop-blur shadow px-5 py-3">
           <h1 className="text-2xl font-extrabold text-violet-700">⌨️ {t.appTitle}</h1>
           <nav className="flex items-center gap-2">
             {tab('practice', t.navPractice)}
+            {tab('stats', t.navStats)}
             {tab('settings', t.navSettings)}
             <button
               onClick={blurAfter(() => updateSettings({ lang: lang === 'zh' ? 'en' : 'zh' }))}
@@ -84,7 +91,7 @@ export default function App() {
           </nav>
         </header>
       </div>
-      <main className="max-w-5xl mx-auto px-6 pt-5 pb-12">{page === 'practice' ? <Practice /> : <Settings />}</main>
+      <main className="max-w-5xl mx-auto px-6 pt-5 pb-12">{page === 'practice' ? <Practice /> : page === 'stats' ? <Stats /> : <Settings />}</main>
     </div>
   )
 }

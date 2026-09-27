@@ -36,6 +36,7 @@ export interface SyncedSettings {
   lang: Lang
   /** Wallpaper id (see content/wallpapers.ts). */
   wallpaper: string
+  dailyGoalMinutes: number
 }
 
 export type Lang = 'zh' | 'en'
@@ -49,6 +50,7 @@ export const DEFAULT_SETTINGS: SyncedSettings = {
   errorMode: 'stop',
   lang: 'zh',
   wallpaper: 'gradient-lavender',
+  dailyGoalMinutes: 15,
 }
 
 /** The small, frequently-changing part of the synced data (state.json). */

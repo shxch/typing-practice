@@ -3,3 +3,25 @@
 body {
   font-family: ui-rounded, "SF Pro Rounded", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
 }
+
+/* Chart roles (reference palette, light surface). */
+:root {
+  --viz-series: #2a78d6;
+  --viz-grid: #e7e5e0;
+  --viz-axis: #6b6a66;
+  --viz-ref: #8a8984;
+  --viz-text: #0b0b0b;
+  --viz-seq-100: #cde2fb;
+  --viz-seq-200: #9ec5f4;
+  --viz-seq-300: #6da7ec;
+  --viz-seq-400: #3987e5;
+  --viz-seq-500: #256abf;
+  --viz-seq-600: #184f95;
+  --viz-seq-700: #0d366b;
+}
+
+@keyframes pop {
+  0% { transform: scale(0.2) rotate(-30deg); opacity: 0; }
+  70% { transform: scale(1.25) rotate(8deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}

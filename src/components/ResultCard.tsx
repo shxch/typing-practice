@@ -6,6 +6,10 @@ export interface RoundResult {
   accuracy: number
   slowest: { ch: string; ms: number }[]
   newKeys: string[]
+  stars: 1 | 2 | 3
+  goalJustDone: boolean
+  streak: number
+  levelUp: string | null
 }
 
 export function ResultCard({ result, onNext }: { result: RoundResult; onNext: () => void }) {
@@ -13,6 +17,31 @@ export function ResultCard({ result, onNext }: { result: RoundResult; onNext: ()
   const show = (ch: string) => (ch === ' ' ? t.space : ch)
   return (
     <div className="rounded-2xl bg-white/85 backdrop-blur shadow-lg p-8 text-center space-y-6">
+      <div>
+        <div className="flex justify-center gap-3 text-5xl">
+          {[1, 2, 3].map((n) => (
+            <span
+              key={n}
+              className={n <= result.stars ? 'animate-[pop_400ms_ease-out_both]' : 'grayscale opacity-25'}
+              style={{ animationDelay: `${(n - 1) * 180}ms` }}
+            >
+              ⭐
+            </span>
+          ))}
+        </div>
+        <div className="text-xs text-slate-400 mt-2">{t.starHint}</div>
+      </div>
+      {result.goalJustDone && (
+        <div className="rounded-xl bg-emerald-500 text-white py-3 text-xl font-bold">
+          {t.goalJustDone}
+          {result.streak > 1 && <div className="text-base font-medium mt-1">{t.goalStreakNote(result.streak)}</div>}
+        </div>
+      )}
+      {result.levelUp && (
+        <div className="rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-white py-3 text-xl font-bold">
+          {t.levelUp(result.levelUp)}
+        </div>
+      )}
       {result.newKeys.length > 0 && (
         <div className="rounded-xl bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white py-4 text-2xl font-bold">
           {t.unlockedNew}{result.newKeys.map(show).join(' ')}
