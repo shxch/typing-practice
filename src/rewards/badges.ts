@@ -93,7 +93,7 @@ export const BADGES: Badge[] = [
   ...tiers('streak', (c) => c.bestDayStreak, [
     [3, '🔥', '小火苗', 'Little Flame', '连续 3 天完成每日目标', 'Meet the daily goal 3 days in a row'],
     [7, '🌙', '一周月光', 'Week of Moons', '连续 7 天完成每日目标', 'Meet the daily goal 7 days in a row'],
-    [14, '🌟', '坚持之星', 'Starflight Focus', '连续 14 天完成每日目标', 'Meet the daily goal 14 days in a row'],
+    [14, '🌟', '坚持之星', 'Steadfast Heart', '连续 14 天完成每日目标', 'Meet the daily goal 14 days in a row'],
     [30, '🌋', '不灭之火', 'Undying Fire', '连续 30 天完成每日目标', 'Meet the daily goal 30 days in a row'],
     [100, '🐲', '百日神龙', 'Hundred-Day Dragon', '连续 100 天完成每日目标', 'Meet the daily goal 100 days in a row'],
   ]),
