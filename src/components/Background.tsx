@@ -43,12 +43,12 @@ export function WallpaperLayers({ wallpaper, fit, url, fixed }: { wallpaper: Wal
   const pos = fixed ? 'fixed' : 'absolute'
   const bg = url ? `url("${url}")` : wallpaper.css
   if (fit.mode === 'cover') {
-    return <div className={`${pos} inset-0 bg-cover bg-center`} style={{ backgroundImage: bg, backgroundColor: '#f5f3ff' }} />
+    return <div className={`${pos} inset-0 bg-cover bg-center`} style={{ backgroundImage: bg, backgroundColor: 'var(--theme-50)' }} />
   }
   return (
     <>
       {/* Soft, blurred copy fills the screen behind the page. */}
-      <div className={`${pos} inset-0 overflow-hidden`} style={{ backgroundColor: '#f5f3ff' }}>
+      <div className={`${pos} inset-0 overflow-hidden`} style={{ backgroundColor: 'var(--theme-50)' }}>
         <div className="absolute -inset-10 bg-cover bg-center blur-2xl saturate-150 opacity-80" style={{ backgroundImage: bg }} />
       </div>
       {/* The whole picture, sharp, on the right; its left edge fades into the blur. */}

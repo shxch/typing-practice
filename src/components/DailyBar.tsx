@@ -37,7 +37,7 @@ export function DailyBar({ sessions, settings, liveMs }: Props) {
         </div>
         <div className="h-3.5 rounded-full bg-[var(--viz-grid)] mt-1.5 overflow-hidden">
           <div
-            className={`h-full rounded-full ${done ? 'bg-emerald-500' : 'bg-gradient-to-r from-violet-400 to-violet-600'}`}
+            className={`h-full rounded-full ${done ? 'bg-emerald-500' : 'bg-gradient-to-r from-theme-400 to-theme-600'}`}
             style={{ width: `${Math.min(1, today / goal) * 100}%`, transition: 'width 600ms ease' }}
           />
         </div>

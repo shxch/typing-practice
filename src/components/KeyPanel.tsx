@@ -67,7 +67,7 @@ export function KeyPanel({ progress, sessions, settings, selected, onSelect }: P
                           : t.locked
                       }
                       className={`relative w-7 h-8 rounded-md font-mono font-semibold text-sm border ${
-                        ch === key ? 'ring-2 ring-offset-1 ring-violet-500 border-transparent' : 'border-black/5'
+                        ch === key ? 'ring-2 ring-offset-1 ring-theme-500 border-transparent' : 'border-black/5'
                       } ${ch === progress.focus ? 'underline decoration-2 underline-offset-2' : ''}`}
                       style={style}
                     >

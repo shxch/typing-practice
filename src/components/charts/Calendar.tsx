@@ -45,7 +45,7 @@ export function Calendar({ daily, goalMinutes, months = 3, weekdays, monthLabel,
                   <div
                     key={key}
                     title={tooltip(key, minutes)}
-                    className={`w-6 h-6 rounded flex items-center justify-center ${key === today ? 'ring-2 ring-violet-500' : ''}`}
+                    className={`w-6 h-6 rounded flex items-center justify-center ${key === today ? 'ring-2 ring-theme-500' : ''}`}
                     style={{ background: bg, color: share >= 0.75 ? 'white' : 'var(--viz-axis)' }}
                   >
                     {i + 1}

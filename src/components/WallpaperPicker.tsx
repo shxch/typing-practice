@@ -26,7 +26,7 @@ function Preview({ w, selected, onPick, onRemove }: { w: Wallpaper; selected: bo
         disabled={loadingPhoto}
         title={w.name}
         className={`absolute inset-0 overflow-hidden rounded-xl border-2 transition ${
-          selected ? 'border-violet-600 ring-4 ring-violet-200' : 'border-white/80 hover:border-violet-300'
+          selected ? 'border-theme-600 ring-4 ring-theme-200' : 'border-white/80 hover:border-theme-300'
         }`}
       >
         {loadingPhoto ? (
@@ -89,7 +89,7 @@ function AddTile({ height }: { height: number }) {
       }}
       disabled={busy}
       className={`shrink-0 rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-1 text-sm transition ${
-        drag ? 'border-violet-500 bg-violet-50 text-violet-700' : 'border-slate-300 bg-white/70 text-slate-500 hover:border-violet-400 hover:text-violet-600'
+        drag ? 'border-theme-500 bg-theme-50 text-theme-700' : 'border-slate-300 bg-white/70 text-slate-500 hover:border-theme-400 hover:text-theme-600'
       }`}
       style={{ width: TILE_W, height }}
     >
@@ -138,7 +138,7 @@ export function WallpaperPicker({ value, onChange }: { value: string; onChange: 
         </div>
       ))}
       {hidden.length > 0 && (
-        <button onClick={() => updateSettings({ hiddenWallpapers: [] })} className="text-sm text-violet-600 underline">
+        <button onClick={() => updateSettings({ hiddenWallpapers: [] })} className="text-sm text-theme-600 underline">
           {t.wpRestore(hidden.length)}
         </button>
       )}

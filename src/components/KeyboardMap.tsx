@@ -61,7 +61,7 @@ export function KeyboardMap({ progress }: { progress: Progress }) {
             let cls = 'bg-slate-100 text-slate-300 border-slate-200'
             if (open.length > 0) cls = 'bg-white text-slate-700 border-slate-300 shadow-sm'
             if (isWeak) cls = 'bg-amber-50 text-amber-700 border-amber-300 shadow-sm'
-            if (isFocus) cls = 'bg-violet-500 text-white border-violet-600 shadow ring-4 ring-violet-200'
+            if (isFocus) cls = 'bg-theme-500 text-white border-theme-600 shadow ring-4 ring-theme-200'
             return (
               <div
                 key={k.label}

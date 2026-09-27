@@ -10,6 +10,7 @@ import { Stats } from './pages/Stats'
 import { setVolume } from './sound/sound'
 import { hasLocalChanges, useApp } from './store/app'
 import { syncNow } from './sync/runner'
+import { useWallpaperTheme } from './theme/useTheme'
 
 type Page = 'practice' | 'stats' | 'settings'
 
@@ -51,6 +52,7 @@ export default function App() {
   const wallpapers = useWallpapers()
   const wallpaper = findWallpaper(wallpapers, wallpaperId)
   const fit = useWallpaperFit(wallpaper)
+  useWallpaperTheme(wallpaper)
 
   // Blur after clicking so a later Space/Enter doesn't re-trigger the button.
   const blurAfter = (fn: () => void) => (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -61,7 +63,7 @@ export default function App() {
   const tab = (p: Page, label: string) => (
     <button
       onClick={blurAfter(() => setPage(p))}
-      className={`px-4 py-1.5 rounded-lg font-medium ${page === p ? 'bg-violet-600 text-white' : 'text-slate-600 hover:bg-violet-100'}`}
+      className={`px-4 py-1.5 rounded-lg font-medium ${page === p ? 'bg-theme-600 text-white' : 'text-slate-600 hover:bg-theme-100'}`}
     >
       {label}
     </button>
@@ -76,7 +78,7 @@ export default function App() {
       <Background wallpaper={wallpaper} fit={fit} />
       <div className="max-w-5xl mx-auto px-6 pt-4">
         <header className="flex flex-wrap gap-3 items-center justify-between rounded-2xl bg-white/80 backdrop-blur shadow px-5 py-3">
-          <h1 className="flex items-center gap-2.5 text-2xl font-extrabold text-violet-700">
+          <h1 className="flex items-center gap-2.5 text-2xl font-extrabold text-theme-700">
             <img src={pandaLogo} alt="" className="w-10 h-10 drop-shadow-sm" />
             {t.appTitle}
           </h1>
@@ -87,7 +89,7 @@ export default function App() {
             <button
               onClick={blurAfter(() => updateSettings({ lang: lang === 'zh' ? 'en' : 'zh' }))}
               title={t.langToggleTitle}
-              className="w-10 py-1.5 rounded-lg font-semibold text-violet-700 border border-violet-200 hover:bg-violet-100"
+              className="w-10 py-1.5 rounded-lg font-semibold text-theme-700 border border-theme-200 hover:bg-theme-100"
             >
               {t.langToggle}
             </button>

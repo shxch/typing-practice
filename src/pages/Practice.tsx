@@ -165,7 +165,7 @@ export function Practice() {
         onClick()
         e.currentTarget.blur()
       }}
-      className="underline decoration-dotted underline-offset-2 hover:text-violet-700"
+      className="underline decoration-dotted underline-offset-2 hover:text-theme-700"
     >
       {label}
     </button>
@@ -180,7 +180,7 @@ export function Practice() {
       {showKeyStats && (
         <div className={`${panel} px-5 py-4 space-y-3`}>
           <div className="text-sm text-slate-600">
-            <span className="font-semibold text-violet-700">{stageName}</span>
+            <span className="font-semibold text-theme-700">{stageName}</span>
             <span className="mx-2">·</span>
             {t.unlockedUnits(progress.unlockedUnits, UNITS.length)}
           </div>

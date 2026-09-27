@@ -55,7 +55,7 @@ export function Stats() {
               step={0.1}
               value={smoothness}
               onChange={(e) => setSmoothness(Number(e.target.value))}
-              className="accent-violet-600"
+              className="accent-theme-600"
             />
           </label>
         </div>

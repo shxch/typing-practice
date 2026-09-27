@@ -73,12 +73,12 @@ export function TypingArea({ state, large = false }: { state: TypingState; large
         >
           <div
             className={`absolute inset-x-0 top-[12%] bottom-[12%] rounded-md transition-colors duration-150 ${
-              missedHere ? 'bg-rose-200' : 'bg-violet-200'
+              missedHere ? 'bg-rose-200' : 'bg-theme-200'
             }`}
           />
           <div
             className={`absolute inset-x-0 bottom-[8%] h-1 rounded-full transition-colors duration-150 ${
-              missedHere ? 'bg-rose-500' : 'bg-violet-500'
+              missedHere ? 'bg-rose-500' : 'bg-theme-500'
             }`}
           />
         </div>
@@ -89,7 +89,7 @@ export function TypingArea({ state, large = false }: { state: TypingState; large
             const i = w.start + j
             const mark = state.marks[i]
             let cls: string = MARK_CLASS[mark]
-            if (i === state.pos && !state.done) cls = missedHere ? 'text-rose-700' : 'text-violet-900'
+            if (i === state.pos && !state.done) cls = missedHere ? 'text-rose-700' : 'text-theme-900'
             const shown = mark === 'err' && ch === ' ' ? '·' : ch
             return (
               <span key={i} data-i={i} className={`relative ${cls}`}>

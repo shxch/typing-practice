@@ -43,13 +43,13 @@ export function ResultCard({ result, onNext }: { result: RoundResult; onNext: ()
         </div>
       )}
       {result.newKeys.length > 0 && (
-        <div className="rounded-xl bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white py-4 text-2xl font-bold">
+        <div className="rounded-xl bg-gradient-to-r from-theme-500 to-theme-700 text-white py-4 text-2xl font-bold">
           {t.unlockedNew}{result.newKeys.map(show).join(' ')}
         </div>
       )}
       <div className="flex justify-center gap-12">
         <div>
-          <div className="text-5xl font-bold text-violet-600">{Math.round(result.wpm)}</div>
+          <div className="text-5xl font-bold text-theme-600">{Math.round(result.wpm)}</div>
           <div className="text-slate-500 mt-1">{t.speed}</div>
         </div>
         <div>
@@ -69,7 +69,7 @@ export function ResultCard({ result, onNext }: { result: RoundResult; onNext: ()
       )}
       <button
         onClick={onNext}
-        className="px-8 py-3 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-lg font-semibold"
+        className="px-8 py-3 rounded-xl bg-theme-600 hover:bg-theme-700 text-white text-lg font-semibold"
       >
         {t.nextRound}
       </button>

@@ -1,5 +1,38 @@
 @import "tailwindcss";
 
+/* Theme color: set at runtime from the wallpaper (src/theme). Defaults are violet. */
+:root {
+  --theme-50: oklch(0.969 0.016 293.8);
+  --theme-100: oklch(0.943 0.029 294.6);
+  --theme-200: oklch(0.894 0.057 293.3);
+  --theme-300: oklch(0.811 0.111 293.6);
+  --theme-400: oklch(0.702 0.183 293.5);
+  --theme-500: oklch(0.606 0.25 292.7);
+  --theme-600: oklch(0.541 0.281 293);
+  --theme-700: oklch(0.491 0.27 292.6);
+  --theme-800: oklch(0.432 0.232 292.8);
+  --theme-900: oklch(0.38 0.189 293.7);
+}
+
+@theme inline {
+  --color-theme-50: var(--theme-50);
+  --color-theme-100: var(--theme-100);
+  --color-theme-200: var(--theme-200);
+  --color-theme-300: var(--theme-300);
+  --color-theme-400: var(--theme-400);
+  --color-theme-500: var(--theme-500);
+  --color-theme-600: var(--theme-600);
+  --color-theme-700: var(--theme-700);
+  --color-theme-800: var(--theme-800);
+  --color-theme-900: var(--theme-900);
+}
+
+/* Smooth hand-over when the wallpaper (and so the theme) changes. */
+button, header, h1, .theme-fade {
+  transition-property: color, background-color, border-color, box-shadow;
+  transition-duration: 250ms;
+}
+
 body {
   font-family: ui-rounded, "SF Pro Rounded", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
 }

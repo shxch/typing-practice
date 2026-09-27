@@ -30,7 +30,7 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
   )
 }
 
-const input = 'w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-violet-300'
+const input = 'w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-theme-300'
 
 const clamp = (v: string, lo: number, hi: number) => Math.min(hi, Math.max(lo, Number(v) || lo))
 
@@ -83,7 +83,7 @@ export function Settings() {
                 key={v}
                 onClick={() => updateSettings({ lang: v })}
                 className={`px-4 py-1.5 rounded-lg border ${
-                  settings.lang === v ? 'bg-violet-600 border-violet-600 text-white' : 'bg-white border-slate-300 text-slate-600'
+                  settings.lang === v ? 'bg-theme-600 border-theme-600 text-white' : 'bg-white border-slate-300 text-slate-600'
                 }`}
               >
                 {text}
@@ -109,9 +109,9 @@ export function Settings() {
               value={config.volume}
               disabled={!config.sound}
               onChange={(e) => setConfig({ volume: Number(e.target.value) })}
-              className="flex-1 accent-violet-600"
+              className="flex-1 accent-theme-600"
             />
-            <button onClick={() => trySound()} disabled={!config.sound} className="text-sm text-violet-600 underline disabled:opacity-40">
+            <button onClick={() => trySound()} disabled={!config.sound} className="text-sm text-theme-600 underline disabled:opacity-40">
               {t.soundTest}
             </button>
           </div>
@@ -127,7 +127,7 @@ export function Settings() {
                   ;[0, 150, 300, 450].forEach((ms, i) => setTimeout(() => playCorrect(v, i === 2), ms))
                 }}
                 className={`px-4 py-1.5 rounded-lg border disabled:opacity-40 ${
-                  config.soundStyle === v ? 'bg-violet-600 border-violet-600 text-white' : 'bg-white border-slate-300 text-slate-600'
+                  config.soundStyle === v ? 'bg-theme-600 border-theme-600 text-white' : 'bg-white border-slate-300 text-slate-600'
                 }`}
               >
                 {t.styles[v]}
@@ -153,7 +153,7 @@ export function Settings() {
             value={config.token}
             onChange={(e) => setConfig({ token: e.target.value.trim() })}
           />
-          <a className="text-xs text-violet-600 underline" href={TOKEN_URL} target="_blank" rel="noreferrer">
+          <a className="text-xs text-theme-600 underline" href={TOKEN_URL} target="_blank" rel="noreferrer">
             {t.createToken}
           </a>
         </Field>
@@ -161,7 +161,7 @@ export function Settings() {
           <input className={input} value={config.device} onChange={(e) => setConfig({ device: e.target.value })} />
         </Field>
         <div className="flex items-center gap-3">
-          <button onClick={testConnection} className="px-4 py-2 rounded-lg bg-violet-600 text-white hover:bg-violet-700">
+          <button onClick={testConnection} className="px-4 py-2 rounded-lg bg-theme-600 text-white hover:bg-theme-700">
             {t.testSync}
           </button>
           <span className="text-sm text-slate-600">{check}</span>
@@ -253,7 +253,7 @@ export function Settings() {
           max={UNITS.length}
           value={units}
           onChange={(e) => updateSettings({ manualUnits: Number(e.target.value) })}
-          className="w-full accent-violet-600"
+          className="w-full accent-theme-600"
         />
         <div className="flex flex-wrap gap-1.5">
           {UNITS.map((u, i) => (
@@ -263,7 +263,7 @@ export function Settings() {
               className={`px-2 py-0.5 rounded font-mono text-sm ${
                 i < units
                   ? u.stage === 'A'
-                    ? 'bg-violet-100 text-violet-800'
+                    ? 'bg-theme-100 text-theme-800'
                     : u.stage === 'B'
                       ? 'bg-sky-100 text-sky-800'
                       : 'bg-emerald-100 text-emerald-800'
@@ -275,7 +275,7 @@ export function Settings() {
           ))}
         </div>
         {settings.manualUnits !== null && (
-          <button onClick={() => updateSettings({ manualUnits: null })} className="text-sm text-violet-600 underline">
+          <button onClick={() => updateSettings({ manualUnits: null })} className="text-sm text-theme-600 underline">
             {t.restoreAuto}
           </button>
         )}
