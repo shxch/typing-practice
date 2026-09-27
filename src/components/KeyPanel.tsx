@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { msToWpm } from '../engine/typing'
 import { useT } from '../i18n'
 import { UNITS, meetsTarget, type Progress, type Stage, type UnlockSettings } from '../lessons/curriculum'
-import { byTime, keySpeedSeries, keySummary, smooth } from '../lessons/stats'
+import { byTime, keySpeedSeries, keySummary } from '../lessons/stats'
 import type { Session } from '../store/types'
 import { LineChart } from './charts/LineChart'
 
@@ -106,8 +106,7 @@ export function KeyPanel({ progress, sessions, settings, selected, onSelect }: P
             </div>
             <div className="text-xs text-slate-500 mt-2 mb-1">{t.keySpeedChart(key)}</div>
             <LineChart
-              line={smooth(series, 0.5)}
-              raw={series}
+              points={series}
               target={{ value: settings.targetWpm, label: t.target(settings.targetWpm) }}
               height={140}
               format={(v) => String(Math.round(v))}

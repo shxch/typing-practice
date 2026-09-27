@@ -21,16 +21,6 @@ export function keySpeedSeries(sorted: Session[], ch: string): Point[] {
   return out
 }
 
-/** Exponential smoothing, 0 = raw, closer to 1 = smoother. */
-export function smooth(points: Point[], amount: number): Point[] {
-  const alpha = 1 - amount
-  let prev: number | null = null
-  return points.map((p) => {
-    prev = prev === null ? p.value : alpha * p.value + (1 - alpha) * prev
-    return { lesson: p.lesson, value: prev }
-  })
-}
-
 export interface KeySummary {
   hits: number
   misses: number

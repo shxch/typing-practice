@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Session } from '../store/types'
-import { dailyTime, dayKey, keySpeedSeries, keySummary, lastWithDelta, smooth, totals } from './stats'
+import { dailyTime, dayKey, keySpeedSeries, keySummary, lastWithDelta, totals } from './stats'
 
 const S = (startedAt: number, wpm: number, accuracy: number, keyStats: Session['keyStats'] = {}): Session => ({
   id: String(startedAt),
@@ -29,17 +29,6 @@ describe('stats', () => {
       { lesson: 1, value: 20 },
       { lesson: 3, value: 40 },
     ])
-  })
-
-  it('smooths', () => {
-    const s = smooth(
-      [
-        { lesson: 1, value: 10 },
-        { lesson: 2, value: 20 },
-      ],
-      0.5,
-    )
-    expect(s[1].value).toBeCloseTo(15)
   })
 
   it('summarizes a key', () => {

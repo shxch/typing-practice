@@ -3,10 +3,8 @@ import type { Point } from '../../lessons/stats'
 import { niceTicks, useWidth } from './useWidth'
 
 interface Props {
-  /** Smoothed line. */
-  line: Point[]
-  /** Raw per-lesson values, drawn as small dots behind the line (optional). */
-  raw?: Point[]
+  /** The actual data points, one per round. */
+  points: Point[]
   /** Dashed reference line, e.g. the target speed. */
   target?: { value: number; label: string }
   height?: number
@@ -20,8 +18,11 @@ interface Props {
 
 const M = { top: 10, right: 12, bottom: 22, left: 34 }
 
-/** Single-series line chart with a crosshair + tooltip. One series, so no legend: the title names it. */
-export function LineChart({ line, raw, target, height = 160, yMax, format, tooltip, empty, ariaLabel }: Props) {
+/**
+ * Single-series line chart of the actual data points (no smoothing), with a crosshair + tooltip.
+ * One series, so no legend: the title names it.
+ */
+export function LineChart({ points: line, target, height = 160, yMax, format, tooltip, empty, ariaLabel }: Props) {
   const [ref, width] = useWidth<HTMLDivElement>()
   const [hover, setHover] = useState<number | null>(null)
 
@@ -36,7 +37,7 @@ export function LineChart({ line, raw, target, height = 160, yMax, format, toolt
     )
   }
 
-  const pts = raw ?? line
+  const pts = line
   const maxX = Math.max(...pts.map((p) => p.lesson), 2)
   const minX = Math.min(...pts.map((p) => p.lesson), 1)
   const dataMax = Math.max(...pts.map((p) => p.value), target?.value ?? 0)
@@ -60,7 +61,6 @@ export function LineChart({ line, raw, target, height = 160, yMax, format, toolt
   }
 
   const hp = hover !== null ? line[hover] : null
-  const rawAtHover = hp && raw ? raw.find((r) => r.lesson === hp.lesson) : null
 
   return (
     <div ref={ref} className="relative">
@@ -94,11 +94,12 @@ export function LineChart({ line, raw, target, height = 160, yMax, format, toolt
             </text>
           </g>
         )}
-        {raw?.map((p) => (
-          <circle key={p.lesson} cx={x(p.lesson)} cy={y(p.value)} r={2.5} fill="var(--viz-series)" opacity={0.25} />
-        ))}
         <path d={path} fill="none" stroke="var(--viz-series)" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
-        {line.length === 1 && <circle cx={x(line[0].lesson)} cy={y(line[0].value)} r={4} fill="var(--viz-series)" />}
+        {/* A marker on every data point while they're far enough apart to read. */}
+        {(line.length === 1 || w / line.length >= 8) &&
+          line.map((p) => (
+            <circle key={p.lesson} cx={x(p.lesson)} cy={y(p.value)} r={3} fill="var(--viz-series)" stroke="white" strokeWidth={1.5} />
+          ))}
         {hp && (
           <g pointerEvents="none">
             <line x1={x(hp.lesson)} x2={x(hp.lesson)} y1={M.top} y2={M.top + h} stroke="var(--viz-ref)" strokeWidth={1} />
@@ -120,7 +121,7 @@ export function LineChart({ line, raw, target, height = 160, yMax, format, toolt
           className="absolute pointer-events-none -translate-x-1/2 -translate-y-full rounded-md bg-slate-900/90 text-white text-xs px-2 py-1 whitespace-nowrap"
           style={{ left: Math.min(Math.max(x(hp.lesson), 70), width - 70), top: y(hp.value) - 8 }}
         >
-          {tooltip(rawAtHover ?? hp)}
+          {tooltip(hp)}
         </div>
       )}
     </div>

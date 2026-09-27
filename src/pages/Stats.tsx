@@ -5,7 +5,7 @@ import { LineChart } from '../components/charts/LineChart'
 import { KeyPanel } from '../components/KeyPanel'
 import { useT } from '../i18n'
 import { UNITS, computeProgress } from '../lessons/curriculum'
-import { byTime, dailyTime, dayKey, keySummary, sessionsOnDay, smooth, totals, type Point, type Totals } from '../lessons/stats'
+import { byTime, dailyTime, dayKey, keySummary, sessionsOnDay, totals, type Point, type Totals } from '../lessons/stats'
 import { useApp } from '../store/app'
 
 function formatTime(ms: number) {
@@ -21,7 +21,6 @@ export function Stats() {
   const sessionsMap = useApp((s) => s.sessions)
   const settings = useApp((s) => s.shared.settings)
   const [selected, setSelected] = useState<string | null>(null)
-  const [smoothness, setSmoothness] = useState(0.5)
 
   const sorted = useMemo(() => byTime(Object.values(sessionsMap)), [sessionsMap])
   const progress = useMemo(() => computeProgress(sorted, settings), [sorted, settings])
@@ -44,24 +43,9 @@ export function Stats() {
       </div>
 
       <div className={panel + ' space-y-3'}>
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <h2 className="font-bold text-slate-800">{t.speedOverTime}</h2>
-          <label className="flex items-center gap-2 text-sm text-slate-500">
-            {t.smoothness}
-            <input
-              type="range"
-              min={0}
-              max={0.9}
-              step={0.1}
-              value={smoothness}
-              onChange={(e) => setSmoothness(Number(e.target.value))}
-              className="accent-theme-600"
-            />
-          </label>
-        </div>
+        <h2 className="font-bold text-slate-800">{t.speedOverTime}</h2>
         <LineChart
-          line={smooth(speed, smoothness)}
-          raw={speed}
+          points={speed}
           target={{ value: settings.targetWpm, label: t.target(settings.targetWpm) }}
           height={200}
           format={(v) => String(Math.round(v))}
@@ -71,8 +55,7 @@ export function Stats() {
         />
         <h2 className="font-bold text-slate-800 pt-2">{t.accOverTime}</h2>
         <LineChart
-          line={smooth(acc, smoothness)}
-          raw={acc}
+          points={acc}
           yMax={100}
           height={140}
           format={(v) => String(Math.round(v))}
