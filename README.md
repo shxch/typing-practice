@@ -1,4 +1,4 @@
-# 打字小达人
+# 熊猫打字 · Typing Panda
 
 A keybr-style typing tutor for one kid: keys unlock one at a time as they get fast and accurate,
 lessons are built from real words, and progress syncs between devices through a private GitHub repo.

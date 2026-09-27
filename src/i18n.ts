@@ -2,7 +2,7 @@ import { useApp } from './store/app'
 import type { Lang } from './store/types'
 
 const zh = {
-  appTitle: '打字小达人',
+  appTitle: '熊猫打字',
   navPractice: '练习',
   navSettings: '设置',
   langToggle: 'EN',
@@ -138,7 +138,7 @@ const zh = {
   volume: '音量',
   soundTest: '试听',
   soundStyle: '打对的声音',
-  styles: { keyboard: '键盘声', kalimba: '拇指琴', wood: '木鱼' },
+  styles: { phone: '手机键盘', keyboard: '机械键盘', kalimba: '拇指琴', wood: '木鱼' },
 
   secPractice: '练习设置（所有设备共用）',
   targetWpm: '目标速度 (WPM)',
@@ -160,7 +160,7 @@ const zh = {
 type Dict = typeof zh
 
 const en: Dict = {
-  appTitle: 'Typing Star',
+  appTitle: 'Typing Panda',
   navPractice: 'Practice',
   navSettings: 'Settings',
   langToggle: '中',
@@ -299,7 +299,7 @@ const en: Dict = {
   volume: 'Volume',
   soundTest: 'Try it',
   soundStyle: 'Correct-key sound',
-  styles: { keyboard: 'Keyboard', kalimba: 'Kalimba', wood: 'Wood block' },
+  styles: { phone: 'Phone keyboard', keyboard: 'Mechanical', kalimba: 'Kalimba', wood: 'Wood block' },
 
   secPractice: 'Practice (shared by all devices)',
   targetWpm: 'Target speed (WPM)',

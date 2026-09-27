@@ -10,7 +10,7 @@ import { UNITS, computeProgress, type Progress } from '../lessons/curriculum'
 import { generateLesson } from '../lessons/generate'
 import { dayKey } from '../lessons/stats'
 import { levelOf, minutesOn, starsFor, streak, totalStars } from '../rewards/rewards'
-import { playCorrect, playError, playFinish, playUnlock } from '../sound/sound'
+import { playCorrect, playDelete, playError, playFinish, playUnlock } from '../sound/sound'
 import { useApp } from '../store/app'
 import type { InProgress, Session } from '../store/types'
 import { syncNow } from '../sync/runner'
@@ -140,6 +140,7 @@ export function Practice() {
       e.preventDefault()
       setImeWarning(false)
       if (next === current.state) return
+      if (e.key === 'Backspace') playDelete(soundStyle)
       if (next.presses > current.state.presses) {
         if (next.correctPresses > current.state.correctPresses) playCorrect(soundStyle, e.key === ' ')
         else playError()

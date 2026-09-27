@@ -118,7 +118,7 @@ export function Settings() {
         </Field>
         <Field label={t.soundStyle}>
           <div className="flex gap-2">
-            {(['keyboard', 'kalimba', 'wood'] as const).map((v) => (
+            {(['phone', 'keyboard', 'kalimba', 'wood'] as const).map((v) => (
               <button
                 key={v}
                 disabled={!config.sound}

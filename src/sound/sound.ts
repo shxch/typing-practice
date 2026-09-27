@@ -58,12 +58,12 @@ function tone({ freq, to, type = 'sine', gain, attack = 0.004, decay, delay = 0 
 /** C major pentatonic, two octaves up: every note sounds good next to every other. */
 const PENTA = [1046.5, 1174.7, 1318.5, 1568.0, 1760.0]
 
-export type SoundStyle = 'keyboard' | 'kalimba' | 'wood'
+export type SoundStyle = 'phone' | 'keyboard' | 'kalimba' | 'wood'
 
 let noise: AudioBuffer | null = null
 
 /** A short burst of filtered noise: the "click" part of a key. */
-function click(freq: number, q: number, gain: number, decay: number) {
+function click(freq: number, q: number, gain: number, decay: number, highpass = 0) {
   const a = audio()
   if (!a || volume === 0) return
   if (!noise) {
@@ -82,7 +82,14 @@ function click(freq: number, q: number, gain: number, decay: number) {
   g.gain.setValueAtTime(0.0001, t)
   g.gain.exponentialRampToValueAtTime(gain, t + 0.002)
   g.gain.exponentialRampToValueAtTime(0.0001, t + decay)
-  src.connect(bp).connect(g).connect(a.out)
+  if (highpass > 0) {
+    const hp = a.ctx.createBiquadFilter()
+    hp.type = 'highpass'
+    hp.frequency.value = highpass
+    src.connect(hp).connect(bp).connect(g).connect(a.out)
+  } else {
+    src.connect(bp).connect(g).connect(a.out)
+  }
   src.start(t)
   src.stop(t + decay + 0.02)
 }
@@ -92,9 +99,20 @@ const KALIMBA = [523.3, 587.3, 659.3, 784.0, 880.0, 1046.5, 880.0, 784.0, 659.3,
 let kalimbaStep = 0
 
 /** Correct key, in the chosen style. Space gets a slightly lower, rounder variant. */
-export function playCorrect(style: SoundStyle = 'keyboard', isSpace = false) {
+export function playCorrect(style: SoundStyle = 'phone', isSpace = false) {
   const jitter = 1 + (Math.random() - 0.5) * 0.06
-  if (style === 'keyboard') {
+  if (style === 'phone') {
+    // Phone-keyboard style (like a touch-screen keyboard's key click): a very short, dry,
+    // bright "tick". Letters are crisp; space is a touch deeper, like the phone's modifier keys.
+    // Synthesized here — not Apple's recording, which is copyrighted.
+    if (isSpace) {
+      tone({ freq: 760 * jitter, to: 620, type: 'triangle', gain: 0.1, attack: 0.001, decay: 0.022 })
+      click(2300 * jitter, 1.1, 0.26, 0.016, 900)
+    } else {
+      tone({ freq: 1250 * jitter, to: 1050, type: 'triangle', gain: 0.07, attack: 0.001, decay: 0.016 })
+      click(3300 * jitter, 1.2, 0.3, 0.012, 1500)
+    }
+  } else if (style === 'keyboard') {
     // A soft, muted "thock": low body + a quiet, dark click.
     const body = (isSpace ? 110 : 150) * jitter
     tone({ freq: body * 1.4, to: body, gain: 0.16, attack: 0.002, decay: 0.05 })
@@ -109,6 +127,13 @@ export function playCorrect(style: SoundStyle = 'keyboard', isSpace = false) {
     tone({ freq: f, type: 'triangle', gain: 0.1, attack: 0.001, decay: 0.045 })
     click(f * 2.2, 3, 0.06, 0.02)
   }
+}
+
+/** Backspace: the phone keyboard's slightly duller "delete" click. Only for the phone style. */
+export function playDelete(style: SoundStyle) {
+  if (style !== 'phone') return
+  tone({ freq: 560, to: 470, type: 'triangle', gain: 0.1, attack: 0.001, decay: 0.028 })
+  click(1800, 1, 0.24, 0.02, 700)
 }
 
 /** Wrong key: a low, muffled "boop" — noticeable, never harsh. */

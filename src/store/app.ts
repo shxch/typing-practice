@@ -64,7 +64,7 @@ export const useApp = create<AppState>()(
         inProgress: null,
         inProgressUpdatedAt: 0,
       },
-      config: { owner: 'shxch', repo: 'typing-data', token: '', device: guessDevice(), sound: true, volume: 0.6, soundStyle: 'keyboard', showKeyboard: true, showKeyStats: true },
+      config: { owner: 'shxch', repo: 'typing-data', token: '', device: guessDevice(), sound: true, volume: 0.6, soundStyle: 'phone', showKeyboard: true, showKeyStats: true },
       shas: {},
       dirtyMonths: [],
       remoteStamp: { settings: 0, inProgress: 0 },
@@ -97,7 +97,13 @@ export const useApp = create<AppState>()(
     }),
     {
       name: 'typing-practice',
-      version: 1,
+      version: 2,
+      // v2: the phone-keyboard click became the default sound.
+      migrate: (persisted, version) => {
+        const p = persisted as { config?: Partial<LocalConfig> }
+        if (version < 2 && p.config) p.config.soundStyle = 'phone'
+        return p as never
+      },
       partialize: (st) => ({
         sessions: st.sessions,
         shared: st.shared,
