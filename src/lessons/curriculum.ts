@@ -38,8 +38,13 @@ export interface UnlockSettings {
 export interface SessionLike {
   startedAt: number
   keyStats: KeyStats
-  /** Units unlocked when this round was played. Unlocks never go backwards past it. */
+  /** Units unlocked when this round was played (including a manual jump). */
   units?: number
+  /**
+   * Units earned by practice alone when this round was played (no manual jump).
+   * Unlocks never go backwards past it. Older sessions don't have it and fall back to `units`.
+   */
+  earnedUnits?: number
 }
 
 /** Smoothed per-key performance across sessions. */
@@ -99,7 +104,7 @@ function updatePerf(keys: Record<string, KeyPerf>, stats: KeyStats) {
     const cur = keys[ch] ?? { samples: 0, ms: null, acc: null }
     const tries = st.n + st.miss
     const next = { ...cur, samples: cur.samples + st.t }
-    if (st.t > 0) {
+    if (st.t > 0 && st.ms > 0) {
       const ms = st.ms / st.t
       const w = weightFor(st.t)
       next.ms = cur.ms === null ? ms : w * ms + (1 - w) * cur.ms
@@ -113,7 +118,7 @@ function updatePerf(keys: Record<string, KeyPerf>, stats: KeyStats) {
   }
 }
 
-const clampUnits = (n: number) => Math.min(UNITS.length, Math.max(1, Math.round(n)))
+const clampUnits = (n: number) => (Number.isFinite(n) ? Math.min(UNITS.length, Math.max(1, Math.round(n))) : 1)
 
 /**
  * Replay sessions in time order, unlocking the next unit whenever every unlocked key meets
@@ -121,12 +126,14 @@ const clampUnits = (n: number) => Math.min(UNITS.length, Math.max(1, Math.round(
  * the target later never takes keys away.
  */
 export function computeProgress(sessions: SessionLike[], s: UnlockSettings): Progress {
-  const replay = (start: number) => {
+  const sorted = [...sessions].sort((a, b) => a.startedAt - b.startedAt)
+  // `manual`: include the unit counts recorded during a manual jump; otherwise practice only.
+  const replay = (start: number, manual: boolean) => {
     const keys: Record<string, KeyPerf> = {}
     let units = start
-    const sorted = [...sessions].sort((a, b) => a.startedAt - b.startedAt)
     for (const session of sorted) {
-      units = Math.max(units, clampUnits(session.units ?? 1))
+      const floor = manual ? session.units : (session.earnedUnits ?? session.units)
+      units = Math.max(units, clampUnits(floor ?? 1))
       updatePerf(keys, session.keyStats)
       while (units < UNITS.length && [...unitChars(units)].every((c) => meetsTarget(c, keys[c], s))) {
         units++
@@ -135,8 +142,9 @@ export function computeProgress(sessions: SessionLike[], s: UnlockSettings): Pro
     return { keys, units }
   }
 
-  const auto = replay(1)
-  const { keys, units: unlockedUnits } = s.manualUnits !== null && s.manualUnits > auto.units ? replay(clampUnits(s.manualUnits)) : auto
+  const auto = replay(1, false)
+  const { keys, units: unlockedUnits } =
+    s.manualUnits !== null && s.manualUnits > auto.units ? replay(clampUnits(s.manualUnits), true) : auto
   const unlocked = unitChars(unlockedUnits)
   const stage = UNITS[unlockedUnits - 1].stage
 

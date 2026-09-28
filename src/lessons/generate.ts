@@ -172,7 +172,14 @@ const contraction = replaceWith(CONTRACTIONS)
 const DECORATE: Record<string, Decorate> = {
   ',': (w) => `${w},`,
   // Half contractions ("don't"), half possessives ("Clay's") so sentences still read naturally.
-  "'": (w, pk) => (pk.rng() < 0.5 && /^[A-Za-z]+[^s]$/.test(w) ? `${w}'s` : contraction(w, pk)),
+  "'": (w, pk) => {
+    // "Clay's" reads as the word "clays", so it must not collide with a word already in the lesson.
+    if (pk.rng() < 0.5 && /^[A-Za-z]+[^s]$/.test(w) && !pk.isUsed(`${w}s`)) {
+      pk.mark(`${w}s`)
+      return `${w}'s`
+    }
+    return contraction(w, pk)
+  },
   '"': (w) => `"${w}"`,
   ':': (w) => `${w}:`,
   ';': (w) => `${w};`,
@@ -184,9 +191,10 @@ const ENDINGS = ['.', '?', '!']
 
 /**
  * Up to `max` Wings of Fire sentences that fit the unlocked keys and share no word with each
- * other (or with anything already in the lesson). Sentences with the focus key come first.
+ * other (or with anything already in the lesson), `budget` words in total at most.
+ * Sentences with the focus key come first.
  */
-function storySentences(p: Progress, max: number, pk: Picker): string[] {
+function storySentences(p: Progress, max: number, budget: number, pk: Picker): string[] {
   const fits = pk.shuffle(WOF_SENTENCES.filter((s) => onlyUses(s, p.unlocked)))
   const focus = p.focus
   const ordered = focus ? [...fits.filter((s) => s.includes(focus)), ...fits.filter((s) => !s.includes(focus))] : fits
@@ -194,7 +202,9 @@ function storySentences(p: Progress, max: number, pk: Picker): string[] {
   for (const s of ordered) {
     if (out.length >= max) break
     const words = s.split(' ').map(baseOf).filter(Boolean)
+    if (s.split(' ').length > budget) continue
     if (new Set(words).size !== words.length || words.some((w) => pk.isUsed(w))) continue
+    budget -= s.split(' ').length
     words.forEach((w) => pk.mark(w))
     out.push(s)
   }
@@ -205,7 +215,7 @@ function sentences(p: Progress, count: number, pk: Picker): string {
   const rng = pk.rng
   const unlocked = p.unlocked
   // A couple of story sentences, then generated sentences for the rest of the words.
-  const story = storySentences(p, count >= 16 ? 2 : 1, pk)
+  const story = storySentences(p, count >= 16 ? 2 : 1, count, pk)
   const storyWords = story.reduce((n, s) => n + s.split(' ').length, 0)
   const words = mixedWords(p, Math.max(0, count - storyWords), pk)
   const marks = Object.keys(DECORATE).filter((m) => unlocked.has(m))

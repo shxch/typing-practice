@@ -9,6 +9,8 @@ export interface Session {
   stage: string
   /** Units unlocked when the lesson was generated. */
   units: number
+  /** Of those, units earned by practice (without a manual jump). Missing in older sessions. */
+  earnedUnits?: number
   chars: number
   wpm: number
   accuracy: number
@@ -22,6 +24,7 @@ export interface InProgress {
   startedAt: number
   device: string
   units: number
+  earnedUnits?: number
   state: TypingState
 }
 

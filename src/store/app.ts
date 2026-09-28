@@ -47,7 +47,7 @@ interface AppState {
   setConfig: (patch: Partial<LocalConfig>) => void
 }
 
-function guessDevice(): string {
+export function guessDevice(): string {
   const ua = typeof navigator === 'undefined' ? '' : navigator.userAgent
   if (/Mac/.test(ua)) return 'MacBook'
   if (/Windows/.test(ua)) return '家里电脑'

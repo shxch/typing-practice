@@ -9,5 +9,6 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   test: {
     environment: 'node',
+    include: ['tests/**/*.test.{ts,tsx}'],
   },
 })

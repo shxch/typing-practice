@@ -110,7 +110,7 @@ export const WOF_SENTENCES = [
   'An ice-cold wind howled across frozen hills.',
   'Fire-breathing guards watched the palace gates.',
   '(Nobody knew where the other egg went.)',
-  "Sundew's temper was quick; her heart was kind.",
+  "Sundew's temper was quick; her heart stayed kind.",
   'Why do NightWings keep so many secrets?',
   'Bumblebee giggled and grabbed a mango.',
   'Riptide swam fast to find Tsunami.',

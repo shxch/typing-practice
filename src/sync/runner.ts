@@ -49,13 +49,16 @@ async function runOnce() {
     // Merge into the *current* state: the user may have kept typing while we synced.
     useApp.setState((cur) => {
       const sessions = mergeSessions(result.remoteSessions, cur.sessions)
-      const pushed = new Set(result.pushedIds)
+      // Still dirty: months added while we synced, plus months of sessions finished meanwhile.
+      // (Everything else that was dirty has just been pushed.)
+      const synced = new Set(st.dirtyMonths)
       const dirtyMonths = Array.from(
-        new Set(
-          Object.values(cur.sessions)
-            .filter((s) => !pushed.has(s.id) && !(s.id in result.remoteSessions))
+        new Set([
+          ...cur.dirtyMonths.filter((m) => !synced.has(m)),
+          ...Object.values(cur.sessions)
+            .filter((s) => !(s.id in st.sessions) && !(s.id in result.remoteSessions))
             .map((s) => monthOf(s.startedAt)),
-        ),
+        ]),
       )
       return {
         sessions,
@@ -73,11 +76,20 @@ async function runOnce() {
     })
     await flushWallpaperOps(client)
   } catch (e) {
-    if (e instanceof GitHubError) {
-      const msg = e.status === 401 ? t().errTokenInvalid : e.status === 403 ? t().errTokenNoWrite : t().errGitHub(e.message)
-      useApp.setState({ status: 'error', statusMessage: msg })
-    } else {
-      useApp.setState({ status: 'offline', statusMessage: t().errOffline })
-    }
+    // fetch() rejects with a TypeError when the network is down; anything else is a real error.
+    if (e instanceof TypeError) useApp.setState({ status: 'offline', statusMessage: t().errOffline })
+    else useApp.setState({ status: 'error', statusMessage: describeError(e) })
   }
+}
+
+/** A sync or connection error in the current language. */
+export function describeError(e: unknown): string {
+  const d = t()
+  if (e instanceof GitHubError) {
+    if (e.status === 401) return d.errTokenInvalid
+    if (e.status === 403) return d.errTokenNoWrite
+    if (e.status === 404) return d.errRepoNotFound
+    return d.errGitHub(e.message)
+  }
+  return d.errGitHub(e instanceof Error ? e.message : String(e))
 }

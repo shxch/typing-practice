@@ -106,7 +106,10 @@ export function typeChar(state: TypingState, ch: string, now: number): TypingSta
   const expected = state.text[state.pos]
   const correct = ch === expected
 
-  const gap = state.lastAt === null ? null : now - state.lastAt
+  const raw = state.lastAt === null ? null : now - state.lastAt
+  // A negative gap means the lesson was resumed on a device whose clock is behind: not a real
+  // measurement. Same-millisecond keys (coarse timers) count as 1 ms so speeds stay finite.
+  const gap = raw === null || raw < 0 ? null : Math.max(1, raw)
   const timed = gap !== null && gap <= IDLE_MS
   const elapsedMs = state.elapsedMs + (timed ? gap! : 0)
   const base = { ...state, presses: state.presses + 1, elapsedMs, lastAt: now }

@@ -1,4 +1,4 @@
-import type { Session, SharedState } from '../store/types'
+import { DEFAULT_SETTINGS, type Session, type SharedState } from '../store/types'
 
 /** Sessions are immutable and keyed by id, so merging is a plain union. */
 export function mergeSessions(a: Record<string, Session>, b: Record<string, Session>): Record<string, Session> {
@@ -10,7 +10,8 @@ export function mergeShared(local: SharedState, remote: SharedState): SharedStat
   const settingsFromRemote = remote.settingsUpdatedAt > local.settingsUpdatedAt
   const progressFromRemote = remote.inProgressUpdatedAt > local.inProgressUpdatedAt
   return {
-    settings: settingsFromRemote ? remote.settings : local.settings,
+    // A device running an older version may have written settings without newer fields.
+    settings: settingsFromRemote ? { ...DEFAULT_SETTINGS, ...remote.settings } : local.settings,
     settingsUpdatedAt: Math.max(local.settingsUpdatedAt, remote.settingsUpdatedAt),
     inProgress: progressFromRemote ? remote.inProgress : local.inProgress,
     inProgressUpdatedAt: Math.max(local.inProgressUpdatedAt, remote.inProgressUpdatedAt),

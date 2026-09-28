@@ -50,7 +50,8 @@ export function LineChart({ points: line, target, height = 160, yMax, yTicks: yC
   const x = (l: number) => M.left + (maxX === minX ? w / 2 : ((l - minX) / (maxX - minX)) * w)
   const y = (v: number) => M.top + h - (Math.min(v, top) / top) * h
   const path = line.map((p, i) => `${i ? 'L' : 'M'}${x(p.lesson).toFixed(1)},${y(p.value).toFixed(1)}`).join('')
-  const xTicks = niceTicks(maxX, 5).filter((v) => v >= minX && v <= maxX)
+  // Rounds are whole numbers: no "round 1.5" tick when there are only a few.
+  const xTicks = niceTicks(maxX, 5).filter((v) => v >= minX && v <= maxX && Number.isInteger(v))
 
   const onMove = (e: React.MouseEvent<SVGRectElement>) => {
     const box = e.currentTarget.getBoundingClientRect()

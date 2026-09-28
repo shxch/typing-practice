@@ -41,6 +41,7 @@ const zh = {
   statusText: { unconfigured: '未设置', idle: '等待同步', syncing: '同步中', ok: '正常', offline: '离线', error: '出错' },
   errTokenInvalid: 'Token 无效或已过期',
   errTokenNoWrite: 'Token 没有写入权限',
+  errRepoNotFound: '找不到数据仓库，请检查用户名、仓库名和 token 权限',
   errGitHub: (m: string) => `GitHub 错误：${m}`,
   errOffline: '网络不可用，联网后会自动同步',
 
@@ -206,6 +207,7 @@ const en: Dict = {
   statusText: { unconfigured: 'not set up', idle: 'waiting', syncing: 'syncing', ok: 'OK', offline: 'offline', error: 'error' },
   errTokenInvalid: 'Token is invalid or expired',
   errTokenNoWrite: 'Token has no write permission',
+  errRepoNotFound: 'Data repo not found — check the user name, repo name and token access',
   errGitHub: (m) => `GitHub error: ${m}`,
   errOffline: 'No network — will sync once back online',
 

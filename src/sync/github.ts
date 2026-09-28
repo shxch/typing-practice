@@ -84,6 +84,11 @@ export class GitHubClient {
     const res = await this.request(path)
     if (res.status === 404) return null
     const body = await res.json()
+    // Files over 1 MB come without inline content; fetch those raw.
+    if (body.encoding === 'none' || !body.content) {
+      const raw = await this.request(path, {}, 'application/vnd.github.raw+json')
+      return { data: JSON.parse(await raw.text()) as T, sha: body.sha }
+    }
     return { data: JSON.parse(fromBase64(body.content)) as T, sha: body.sha }
   }
 
@@ -150,6 +155,14 @@ export class GitHubClient {
       cache: 'no-store',
       headers: { Authorization: `Bearer ${this.cfg.token}`, Accept: 'application/vnd.github+json' },
     })
-    if (!res.ok) throw new GitHubError(res.status, res.status === 404 ? '找不到仓库或 token 无权访问' : res.statusText)
+    if (!res.ok) {
+      let msg = res.statusText
+      try {
+        msg = (await res.json()).message ?? msg
+      } catch {
+        /* keep statusText */
+      }
+      throw new GitHubError(res.status, res.status === 404 ? '找不到仓库或 token 无权访问' : msg || `HTTP ${res.status}`)
+    }
   }
 }

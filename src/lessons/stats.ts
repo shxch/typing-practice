@@ -16,7 +16,8 @@ export function keySpeedSeries(sorted: Session[], ch: string): Point[] {
   const out: Point[] = []
   sorted.forEach((s, i) => {
     const k = s.keyStats[ch]
-    if (k && k.t > 0) out.push({ lesson: i + 1, value: msToWpm(k.ms / k.t) })
+    // ms > 0: sessions recorded before 0 ms gaps were ruled out could hold impossible speeds.
+    if (k && k.t > 0 && k.ms > 0) out.push({ lesson: i + 1, value: msToWpm(k.ms / k.t) })
   })
   return out
 }

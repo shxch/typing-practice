@@ -1,11 +1,11 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { WallpaperPicker } from '../components/WallpaperPicker'
 import { useT } from '../i18n'
 import { UNITS, computeProgress, unitLabel } from '../lessons/curriculum'
 import { playCorrect, playError, playFinish, type SoundStyle } from '../sound/sound'
-import { useApp } from '../store/app'
+import { guessDevice, useApp } from '../store/app'
 import { GitHubClient, GitHubError } from '../sync/github'
-import { syncNow } from '../sync/runner'
+import { describeError, syncNow } from '../sync/runner'
 
 const TOKEN_URL = 'https://github.com/settings/personal-access-tokens/new'
 
@@ -32,7 +32,36 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
 
 const input = 'w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-theme-300'
 
-const clamp = (v: string, lo: number, hi: number) => Math.min(hi, Math.max(lo, Number(v) || lo))
+/**
+ * A number input that can be cleared and retyped freely: the value is only checked and saved
+ * when leaving the field or pressing Enter (an empty field keeps the old value).
+ */
+function NumberField({ value, min, max, onCommit }: { value: number; min: number; max: number; onCommit: (v: number) => void }) {
+  const [draft, setDraft] = useState(String(value))
+  // Follow changes made elsewhere (e.g. synced from another device).
+  useEffect(() => setDraft(String(value)), [value])
+  const commit = () => {
+    const n = Number(draft)
+    if (draft.trim() === '' || !Number.isFinite(n)) return setDraft(String(value))
+    const v = Math.min(max, Math.max(min, Math.round(n)))
+    setDraft(String(v))
+    if (v !== value) onCommit(v)
+  }
+  return (
+    <input
+      className={input}
+      type="number"
+      min={min}
+      max={max}
+      value={draft}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') commit()
+      }}
+    />
+  )
+}
 
 export function Settings() {
   const config = useApp((s) => s.config)
@@ -49,6 +78,8 @@ export function Settings() {
   const progress = computeProgress(Object.values(sessions), settings)
   const earned = progress.earnedUnits
   const units = progress.unlockedUnits
+  // A jump that practice has already caught up with no longer does anything.
+  const jumped = settings.manualUnits !== null && settings.manualUnits > earned
   const stageName = { A: t.stageA, B: t.stageB, C: t.stageC }
 
   async function testConnection() {
@@ -58,7 +89,7 @@ export function Settings() {
       setCheck(t.checkOk)
       void syncNow()
     } catch (e) {
-      setCheck(e instanceof GitHubError ? `✗ ${e.message}` : t.checkNetwork)
+      setCheck(e instanceof GitHubError ? `✗ ${describeError(e)}` : t.checkNetwork)
     }
   }
 
@@ -159,7 +190,12 @@ export function Settings() {
           </a>
         </Field>
         <Field label={t.deviceName} hint={t.deviceHint}>
-          <input className={input} value={config.device} onChange={(e) => setConfig({ device: e.target.value })} />
+          <input
+            className={input}
+            value={config.device}
+            onChange={(e) => setConfig({ device: e.target.value })}
+            onBlur={(e) => setConfig({ device: e.target.value.trim() || guessDevice() })}
+          />
         </Field>
         <div className="flex items-center gap-3">
           <button onClick={testConnection} className="px-4 py-2 rounded-lg bg-theme-600 text-white hover:bg-theme-700">
@@ -177,54 +213,19 @@ export function Settings() {
 
       <Section title={t.secPractice}>
         <Field label={t.dailyGoal} hint={t.dailyGoalHint}>
-          <input
-            className={input}
-            type="number"
-            min={1}
-            max={120}
-            value={settings.dailyGoalMinutes}
-            onChange={(e) => updateSettings({ dailyGoalMinutes: clamp(e.target.value, 1, 120) })}
-          />
+          <NumberField min={1} max={120} value={settings.dailyGoalMinutes} onCommit={(v) => updateSettings({ dailyGoalMinutes: v })} />
         </Field>
         <Field label={t.targetWpm} hint={t.targetWpmHint}>
-          <input
-            className={input}
-            type="number"
-            min={5}
-            max={100}
-            value={settings.targetWpm}
-            onChange={(e) => updateSettings({ targetWpm: clamp(e.target.value, 5, 100) })}
-          />
+          <NumberField min={5} max={100} value={settings.targetWpm} onCommit={(v) => updateSettings({ targetWpm: v })} />
         </Field>
         <Field label={t.targetAcc}>
-          <input
-            className={input}
-            type="number"
-            min={50}
-            max={100}
-            value={Math.round(settings.targetAccuracy * 100)}
-            onChange={(e) => updateSettings({ targetAccuracy: clamp(e.target.value, 50, 100) / 100 })}
-          />
+          <NumberField min={50} max={100} value={Math.round(settings.targetAccuracy * 100)} onCommit={(v) => updateSettings({ targetAccuracy: v / 100 })} />
         </Field>
         <Field label={t.lessonWords}>
-          <input
-            className={input}
-            type="number"
-            min={5}
-            max={80}
-            value={settings.lessonWords}
-            onChange={(e) => updateSettings({ lessonWords: clamp(e.target.value, 5, 80) })}
-          />
+          <NumberField min={5} max={80} value={settings.lessonWords} onCommit={(v) => updateSettings({ lessonWords: v })} />
         </Field>
         <Field label={t.minSamples} hint={t.minSamplesHint}>
-          <input
-            className={input}
-            type="number"
-            min={5}
-            max={100}
-            value={settings.minSamples}
-            onChange={(e) => updateSettings({ minSamples: clamp(e.target.value, 5, 100) })}
-          />
+          <NumberField min={5} max={100} value={settings.minSamples} onCommit={(v) => updateSettings({ minSamples: v })} />
         </Field>
         <Field label={t.onError}>
           <div className="flex gap-4">
@@ -246,13 +247,14 @@ export function Settings() {
       <Section title={t.secCurriculum}>
         <p className="text-sm text-slate-500">
           {t.curriculumIntro(earned)}
-          {settings.manualUnits !== null && <span className="text-amber-600"> {t.manualNote}</span>}
+          {jumped && <span className="text-amber-600"> {t.manualNote}</span>}
         </p>
         <input
           type="range"
           min={1}
           max={UNITS.length}
           value={units}
+          aria-label={t.secCurriculum}
           onChange={(e) => {
             // Jumping ahead only: the slider can't go below what practice has already unlocked.
             const v = Math.max(earned, Number(e.target.value))
@@ -279,7 +281,7 @@ export function Settings() {
             </span>
           ))}
         </div>
-        {settings.manualUnits !== null && (
+        {jumped && (
           <button onClick={() => updateSettings({ manualUnits: null })} className="text-sm text-theme-600 underline">
             {t.restoreAuto}
           </button>

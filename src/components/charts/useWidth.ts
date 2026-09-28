@@ -16,7 +16,7 @@ export function useWidth<T extends HTMLElement>(fallback = 400) {
 
 /** "Nice" upper bound and ticks for a 0-based axis. */
 export function niceTicks(max: number, count = 4): number[] {
-  if (max <= 0) return [0, 1]
+  if (!(max > 0) || !Number.isFinite(max)) return [0, 1]
   const raw = max / count
   const mag = 10 ** Math.floor(Math.log10(raw))
   const step = [1, 2, 2.5, 5, 10].map((m) => m * mag).find((s) => s >= raw)!

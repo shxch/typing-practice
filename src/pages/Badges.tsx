@@ -14,7 +14,7 @@ export function Badges() {
   const sessions = useApp((s) => s.sessions)
   const settings = useApp((s) => s.shared.settings)
   const list = useMemo(() => Object.values(sessions), [sessions])
-  const units = useMemo(() => computeProgress(list, settings).unlockedUnits, [list, settings])
+  const units = useMemo(() => computeProgress(list, settings).earnedUnits, [list, settings])
   const states = useMemo(() => computeBadges(list, settings, units), [list, settings, units])
   const earnedCount = states.filter((s) => s.earnedAt !== null).length
 

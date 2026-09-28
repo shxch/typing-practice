@@ -128,7 +128,8 @@ export interface BadgeState {
 
 /**
  * Replay the sessions and record when each badge was first earned.
- * `currentUnits` lets an unlock badge appear right away, before another round is played.
+ * `currentUnits` (units earned by practice, not a manual jump) lets an unlock badge appear right
+ * away, before another round is played.
  */
 export function computeBadges(sessions: Session[], r: BadgeRules, currentUnits = 0): BadgeState[] {
   const sorted = [...sessions].sort((a, b) => a.startedAt - b.startedAt)
@@ -165,7 +166,8 @@ export function computeBadges(sessions: Session[], r: BadgeRules, currentUnits =
     if (starsFor(s, r) === 3) c.threeStarRounds++
     c.accurateRun = s.accuracy >= 0.95 ? c.accurateRun + 1 : 0
     c.bestAccurateRun = Math.max(c.bestAccurateRun, c.accurateRun)
-    c.maxUnits = Math.max(c.maxUnits, s.units)
+    // Only what practice unlocked counts; a manual jump on the course slider doesn't.
+    c.maxUnits = Math.max(c.maxUnits, s.earnedUnits ?? s.units)
     devices.add(s.device)
     c.devices = devices.size
 

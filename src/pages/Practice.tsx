@@ -4,7 +4,7 @@ import { KeyboardMap } from '../components/KeyboardMap'
 import { KeyPanel } from '../components/KeyPanel'
 import { ResultCard, type RoundResult } from '../components/ResultCard'
 import { TypingArea } from '../components/TypingArea'
-import { accuracy, backspace, createState, slowestKeys, typeChar, wpm } from '../engine/typing'
+import { accuracy, backspace, createState, resume, slowestKeys, typeChar, wpm } from '../engine/typing'
 import { useT } from '../i18n'
 import { UNITS, computeProgress, type Progress } from '../lessons/curriculum'
 import { generateLesson } from '../lessons/generate'
@@ -24,6 +24,7 @@ function freshLesson(progress: Progress, words: number, mode: InProgress['state'
     startedAt: Date.now(),
     device,
     units: progress.unlockedUnits,
+    earnedUnits: progress.earnedUnits,
     state: createState(generateLesson(progress, words), mode),
   }
 }
@@ -55,6 +56,16 @@ export function Practice() {
   const [capsLock, setCapsLock] = useState(false)
   const current = inProgress ?? fresh
 
+  // The key handler reads these instead of render-time values, so two keys handled before
+  // React re-renders (fast rollover, a slow TV) both land on the latest state.
+  const freshRef = useRef(fresh)
+  freshRef.current = fresh
+  const resultRef = useRef(result)
+  resultRef.current = result
+  /** Lessons already continued on this screen; any other stored lesson gets `resume()` first. */
+  const resumed = useRef(new Set<string>())
+  const finished = useRef(new Set<string>())
+
   // Regenerate the untouched lesson when unlocks or settings change.
   const lessonKey = `${progress.unlockedUnits}|${settings.lessonWords}|${settings.errorMode}`
   const lastKey = useRef(lessonKey)
@@ -65,20 +76,27 @@ export function Practice() {
   }, [lessonKey, inProgress, progress, settings, device])
 
   const newRound = useCallback(() => {
+    resultRef.current = null
     setResult(null)
+    setImeWarning(false)
     setInProgress(null)
-    setFresh(freshLesson(progress, settings.lessonWords, settings.errorMode, device))
+    const next = freshLesson(progress, settings.lessonWords, settings.errorMode, device)
+    freshRef.current = next
+    setFresh(next)
   }, [progress, settings, device, setInProgress])
 
   const finish = useCallback(
     (lesson: InProgress, state: InProgress['state']) => {
+      const now = Date.now()
       const session: Session = {
         id: lesson.id,
-        startedAt: lesson.startedAt,
-        endedAt: Date.now(),
+        // A round continued on a later day (or another device) counts for the day it was finished.
+        startedAt: dayKey(lesson.startedAt) === dayKey(now) ? lesson.startedAt : Math.max(lesson.startedAt, now - state.elapsedMs),
+        endedAt: now,
         device,
         stage: UNITS[lesson.units - 1]?.stage ?? 'A',
         units: lesson.units,
+        ...(lesson.earnedUnits !== undefined ? { earnedUnits: lesson.earnedUnits } : {}),
         chars: state.text.length,
         wpm: wpm(state),
         accuracy: accuracy(state),
@@ -86,7 +104,7 @@ export function Practice() {
         keyStats: state.keyStats,
       }
       const after = [...sessionList, session]
-      const today = dayKey(Date.now())
+      const today = dayKey(now)
       const goal = settings.dailyGoalMinutes
       const levelBefore = levelOf(totalStars(sessionList, settings)).level
       const levelAfter = levelOf(totalStars(after, settings)).level
@@ -94,13 +112,18 @@ export function Practice() {
       const afterProgress = computeProgress(after, settings)
       const newKeys = [...afterProgress.unlocked].filter((c) => !progress.unlocked.has(c))
       const badges = newBadges(
-        computeBadges(sessionList, settings, progress.unlockedUnits),
-        computeBadges(after, settings, afterProgress.unlockedUnits),
+        computeBadges(sessionList, settings, progress.earnedUnits),
+        computeBadges(after, settings, afterProgress.earnedUnits),
       )
 
+      finished.current.add(lesson.id)
       addSession(session)
       setInProgress(null)
-      setResult({
+      // Practice has caught up with a manual jump: it has nothing left to do.
+      if (settings.manualUnits !== null && afterProgress.earnedUnits >= settings.manualUnits) {
+        useApp.getState().updateSettings({ manualUnits: null })
+      }
+      const roundResult: RoundResult = {
         wpm: session.wpm,
         accuracy: session.accuracy,
         slowest: slowestKeys(state.keyStats),
@@ -110,7 +133,9 @@ export function Practice() {
         streak: streak(after, goal),
         levelUp: levelAfter > levelBefore ? t.levels[Math.min(levelAfter, t.levels.length - 1)] : null,
         badges,
-      })
+      }
+      resultRef.current = roundResult
+      setResult(roundResult)
       playFinish()
       if (newKeys.length > 0 || goalJustDone || levelAfter > levelBefore || badges.length > 0) playUnlock()
       void syncNow()
@@ -135,7 +160,7 @@ export function Practice() {
         return
       }
 
-      if (result) {
+      if (resultRef.current) {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault()
           newRound()
@@ -143,7 +168,20 @@ export function Practice() {
         return
       }
 
-      let next = current.state
+      const stored = useApp.getState().shared.inProgress
+      let lesson: InProgress
+      if (stored && !finished.current.has(stored.id)) {
+        // Continuing a lesson from another device or from before a reload: the gap since its
+        // last key isn't typing time (and the other device's clock may differ).
+        lesson =
+          resumed.current.has(stored.id) && stored.device === device ? stored : { ...stored, state: resume(stored.state) }
+      } else {
+        // The clock for a new lesson starts at its first key, not when it was generated.
+        lesson = { ...freshRef.current, startedAt: Date.now() }
+      }
+      if (finished.current.has(lesson.id)) return
+      const prev = lesson.state
+      let next = prev
       if (e.key === 'Backspace') {
         next = backspace(next)
       } else if (e.key.length === 1) {
@@ -153,21 +191,20 @@ export function Practice() {
       }
       e.preventDefault()
       setImeWarning(false)
-      if (next === current.state) return
+      if (next === prev) return
       if (e.key === 'Backspace') playDelete(soundStyle)
-      if (next.presses > current.state.presses) {
-        if (next.correctPresses > current.state.correctPresses) playCorrect(soundStyle, e.key === ' ')
+      if (next.presses > prev.presses) {
+        if (next.correctPresses > prev.correctPresses) playCorrect(soundStyle, e.key === ' ')
         else playError()
       }
 
-      // The clock for a new lesson starts at its first key, not when it was generated.
-      const lesson = inProgress ? current : { ...current, startedAt: Date.now() }
+      resumed.current.add(lesson.id)
       if (next.done) finish(lesson, next)
       else setInProgress({ ...lesson, device, state: next })
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [current, inProgress, result, device, soundStyle, finish, newRound, setInProgress])
+  }, [device, soundStyle, finish, newRound, setInProgress])
 
   const st = current.state
   const resumedFromElsewhere = inProgress && inProgress.device !== device && st.pos > 0
@@ -199,6 +236,13 @@ export function Practice() {
             settings={settings}
             selected={selectedKey}
             onSelect={setSelectedKey}
+            header={
+              <div className="text-sm text-slate-600 pb-0.5">
+                <span className="font-semibold text-theme-700">{stageName}</span>
+                <span className="mx-2">·</span>
+                {t.unlockedUnits(progress.unlockedUnits, UNITS.length)}
+              </div>
+            }
           />
         </div>
       )}
@@ -236,13 +280,6 @@ export function Practice() {
             <span>
               {settings.errorMode === 'stop' ? t.hintStop : t.hintBackspace}
               {st.pos === 0 && t.hintStart}
-            header={
-              <div className="text-sm text-slate-600 pb-0.5">
-                <span className="font-semibold text-theme-700">{stageName}</span>
-                <span className="mx-2">·</span>
-                {t.unlockedUnits(progress.unlockedUnits, UNITS.length)}
-              </div>
-            }
             </span>
             {st.pos > 0 && toggle(t.newText, newRound)}
             {toggle(showKeyboard ? t.hideKeyboard : t.showKeyboard, () => setConfig({ showKeyboard: !showKeyboard }))}

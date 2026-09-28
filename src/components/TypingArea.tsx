@@ -33,12 +33,15 @@ export function TypingArea({ state, large = false }: { state: TypingState; large
       const el = box.querySelector<HTMLElement>(`[data-i="${state.pos}"]`)
       if (!el) return setCaret(null)
       setCaret({ x: el.offsetLeft, y: el.offsetTop, w: el.offsetWidth, h: el.offsetHeight })
+      return el
     }
     // A new lesson (or a resize reflow) should snap, not slide across the screen.
     const newText = textRef.current !== state.text
     textRef.current = state.text
     setAnimate(!newText)
-    place()
+    const el = place()
+    // Long lessons can be taller than the screen: while typing, keep the current line visible.
+    if (el && !newText && state.pos > 0) el.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' })
     const ro = new ResizeObserver(() => {
       setAnimate(false)
       place()
