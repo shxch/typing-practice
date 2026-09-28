@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import pandaLogo from './assets/panda.svg'
-import { Background, useWallpaperFit } from './components/Background'
+import { Background, useDecodedWallpaper, useWallpaperFit } from './components/Background'
 import { SyncBadge } from './components/SyncBadge'
 import { findWallpaper, useWallpapers } from './content/wallpapers'
 import { useT } from './i18n'
@@ -51,7 +51,7 @@ export default function App() {
   }, [lang, t])
 
   const wallpapers = useWallpapers()
-  const wallpaper = findWallpaper(wallpapers, wallpaperId)
+  const wallpaper = useDecodedWallpaper(findWallpaper(wallpapers, wallpaperId))
   const fit = useWallpaperFit(wallpaper)
   useWallpaperTheme(wallpaper)
 

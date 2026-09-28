@@ -27,12 +27,6 @@
   --color-theme-900: var(--theme-900);
 }
 
-/* Smooth hand-over when the wallpaper (and so the theme) changes. */
-button, header, h1, .theme-fade {
-  transition-property: color, background-color, border-color, box-shadow;
-  transition-duration: 250ms;
-}
-
 body {
   font-family: ui-rounded, "SF Pro Rounded", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
 }

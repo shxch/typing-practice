@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { fitFor, type Fit, type Wallpaper } from '../content/wallpapers'
 
 export function useViewport() {
@@ -30,6 +30,36 @@ export function useImageAspect(url: string | null) {
   return aspect
 }
 
+const decoded = new Set<string>()
+
+/**
+ * The wallpaper to show: the requested one once its full picture is decoded, the previous
+ * one until then. Swapping in an undecoded picture decodes it during paint and stalls the page.
+ */
+export function useDecodedWallpaper(w: Wallpaper): Wallpaper {
+  const ready = !w.url || decoded.has(w.url)
+  const last = useRef(w)
+  if (ready) last.current = w
+  const [, rerender] = useState(0)
+  const url = w.url
+  useEffect(() => {
+    if (!url || decoded.has(url)) return
+    let alive = true
+    const img = new Image()
+    img.src = url
+    const done = () => {
+      decoded.add(url)
+      if (alive) rerender((n) => n + 1)
+    }
+    // Hidden tabs may put decoding off indefinitely; don't wait for it forever.
+    Promise.race([img.decode(), new Promise((r) => setTimeout(r, 1500))]).then(done, done)
+    return () => {
+      alive = false
+    }
+  }, [url])
+  return last.current
+}
+
 /** How the wallpaper sits on this screen; the page layout uses it to make room for a side picture. */
 export function useWallpaperFit(w: Wallpaper): Fit {
   const { w: sw, h: sh } = useViewport()
@@ -49,7 +79,11 @@ export function WallpaperLayers({ wallpaper, fit, url, fixed }: { wallpaper: Wal
     <>
       {/* Soft, blurred copy fills the screen behind the page. */}
       <div className={`${pos} inset-0 overflow-hidden`} style={{ backgroundColor: 'var(--theme-50)' }}>
-        <div className="absolute -inset-10 bg-cover bg-center blur-2xl saturate-150 opacity-80" style={{ backgroundImage: bg }} />
+        {/* Blurred anyway, so the small thumbnail is enough and much cheaper to redraw. */}
+        <div
+          className="absolute -inset-10 bg-cover bg-center blur-2xl saturate-150 opacity-80"
+          style={{ backgroundImage: wallpaper.thumb ? `url("${wallpaper.thumb}")` : bg }}
+        />
       </div>
       {/* The whole picture, sharp, on the right; its left edge fades into the blur. */}
       <div
