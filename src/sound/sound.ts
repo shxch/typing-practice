@@ -6,10 +6,12 @@ let ctx: AudioContext | null = null
 let master: GainNode | null = null
 let volume = 0.6
 
-function audio(): { ctx: AudioContext; out: GainNode } | null {
+type Audio = { ctx: AudioContext; out: GainNode }
+
+function audio(): Audio | null {
   if (typeof window === 'undefined' || !('AudioContext' in window)) return null
   if (!ctx) {
-    ctx = new AudioContext()
+    ctx = new AudioContext({ latencyHint: 'interactive' })
     master = ctx.createGain()
     master.gain.value = volume
     // A gentle low-pass takes the edge off every sound.
@@ -18,8 +20,32 @@ function audio(): { ctx: AudioContext; out: GainNode } | null {
     lp.frequency.value = 4200
     master.connect(lp).connect(ctx.destination)
   }
-  if (ctx.state === 'suspended') void ctx.resume()
   return { ctx, out: master! }
+}
+
+/**
+ * Run `play` once the context is actually running. A fresh or suspended context resumes
+ * asynchronously; scheduling against its frozen clock made the first key's sound late or lost.
+ */
+function withAudio(play: (a: Audio) => void) {
+  const a = audio()
+  if (!a || volume === 0) return
+  if (a.ctx.state === 'running') play(a)
+  else a.ctx.resume().then(() => play(a), () => {})
+}
+
+/** Create and resume the context on any user gesture, so it is already running by the first key. */
+function warmUp() {
+  const a = audio()
+  if (a && a.ctx.state !== 'running') a.ctx.resume().catch(() => {})
+}
+
+if (typeof window !== 'undefined') {
+  for (const ev of ['pointerdown', 'keydown', 'touchstart'])
+    window.addEventListener(ev, warmUp, { capture: true, passive: true })
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && ctx) warmUp()
+  })
 }
 
 export function setVolume(v: number) {
@@ -38,9 +64,11 @@ interface Tone {
   delay?: number
 }
 
-function tone({ freq, to, type = 'sine', gain, attack = 0.004, decay, delay = 0 }: Tone) {
-  const a = audio()
-  if (!a || volume === 0) return
+function tone(opts: Tone) {
+  withAudio((a) => playTone(a, opts))
+}
+
+function playTone(a: Audio, { freq, to, type = 'sine', gain, attack = 0.004, decay, delay = 0 }: Tone) {
   const t = a.ctx.currentTime + delay
   const osc = a.ctx.createOscillator()
   const g = a.ctx.createGain()
@@ -64,8 +92,10 @@ let noise: AudioBuffer | null = null
 
 /** A short burst of filtered noise: the "click" part of a key. */
 function click(freq: number, q: number, gain: number, decay: number, highpass = 0) {
-  const a = audio()
-  if (!a || volume === 0) return
+  withAudio((a) => playClick(a, freq, q, gain, decay, highpass))
+}
+
+function playClick(a: Audio, freq: number, q: number, gain: number, decay: number, highpass: number) {
   if (!noise) {
     noise = a.ctx.createBuffer(1, Math.floor(a.ctx.sampleRate * 0.1), a.ctx.sampleRate)
     const data = noise.getChannelData(0)
