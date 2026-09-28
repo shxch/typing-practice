@@ -192,7 +192,7 @@ export function Practice() {
       </div>
 
       {showKeyStats && (
-        <div className={`${panel} px-5 py-4 space-y-3`}>
+        <div className={`${panel} px-5 py-3 space-y-2`}>
           <div className="text-sm text-slate-600">
             <span className="font-semibold text-theme-700">{stageName}</span>
             <span className="mx-2">·</span>

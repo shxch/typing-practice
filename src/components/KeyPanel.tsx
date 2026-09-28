@@ -37,11 +37,11 @@ export function KeyPanel({ progress, sessions, settings, selected, onSelect }: P
 
   return (
     <div className="@container">
-    <div className="grid gap-5 @3xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-      <div className="space-y-2">
+    <div className="grid gap-x-5 gap-y-3 @3xl:grid-cols-[minmax(0,11fr)_minmax(0,9fr)]">
+      <div className="space-y-1.5">
         {stages.map((stage) => (
           <div key={stage}>
-            <div className="text-xs text-slate-500 mb-1">{stageName[stage]}</div>
+            {stages.length > 1 && <div className="text-xs text-slate-500 mb-1">{stageName[stage]}</div>}
             <div className="flex flex-wrap gap-1">
               {UNITS.filter((u) => u.stage === stage)
                 .flatMap((u) => u.chars)
@@ -67,7 +67,7 @@ export function KeyPanel({ progress, sessions, settings, selected, onSelect }: P
                             : `${ch}: ${t.notPracticed}`
                           : t.locked
                       }
-                      className={`relative w-7 h-8 rounded-md font-mono font-semibold text-sm border ${
+                      className={`relative w-8 h-9 rounded-md font-mono font-semibold text-base border ${
                         ch === key ? 'ring-2 ring-offset-1 ring-theme-500 border-transparent' : 'border-black/5'
                       } ${ch === progress.focus ? 'underline decoration-2 underline-offset-2' : ''}`}
                       style={style}
@@ -98,18 +98,19 @@ export function KeyPanel({ progress, sessions, settings, selected, onSelect }: P
       <div className="min-w-0">
         {key && summary && (
           <>
-            <div className="flex items-baseline gap-4 flex-wrap">
-              <span className="font-mono text-3xl font-bold text-slate-800 w-8">{key === ' ' ? '␣' : key}</span>
+            <div className="flex items-baseline gap-x-3 gap-y-1 flex-wrap">
+              <span className="font-mono text-2xl font-bold text-slate-800 w-6">{key === ' ' ? '␣' : key}</span>
               <Stat label={t.recentSpeed} value={`${fmt(summary.recent)} WPM`} />
               <Stat label={t.bestSpeed} value={`${fmt(summary.best)} WPM`} />
               <Stat label={t.accuracy} value={summary.accuracy === null ? '–' : `${Math.round(summary.accuracy * 100)}%`} />
               <Stat label={t.hits} value={String(summary.hits)} />
             </div>
-            <div className="text-xs text-slate-500 mt-2 mb-1">{t.keySpeedChart(key)}</div>
+            <div className="text-xs text-slate-500 mt-1">{t.keySpeedChart(key)}</div>
             <LineChart
               points={series}
               target={{ value: settings.targetWpm, label: t.target(settings.targetWpm) }}
-              height={140}
+              height={90}
+              yTicks={2}
               format={(v) => String(Math.round(v))}
               tooltip={(p) => t.lessonPoint(p.lesson, Math.round(p.value))}
               empty={t.noDataYet}
@@ -125,8 +126,8 @@ export function KeyPanel({ progress, sessions, settings, selected, onSelect }: P
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <span className="text-sm text-slate-500">
-      {label} <span className="font-semibold text-slate-800">{value}</span>
+    <span className="text-xs text-slate-500">
+      {label} <span className="text-sm font-semibold text-slate-800">{value}</span>
     </span>
   )
 }

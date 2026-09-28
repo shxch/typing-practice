@@ -10,6 +10,8 @@ interface Props {
   height?: number
   /** Fixed y-axis max (e.g. 100 for percentages); otherwise fits the data. */
   yMax?: number
+  /** Roughly how many y gridlines; fewer suits short charts. */
+  yTicks?: number
   format: (v: number) => string
   tooltip: (p: Point) => string
   empty: string
@@ -22,7 +24,7 @@ const M = { top: 10, right: 12, bottom: 22, left: 34 }
  * Single-series line chart of the actual data points (no smoothing), with a crosshair + tooltip.
  * One series, so no legend: the title names it.
  */
-export function LineChart({ points: line, target, height = 160, yMax, format, tooltip, empty, ariaLabel }: Props) {
+export function LineChart({ points: line, target, height = 160, yMax, yTicks: yCount = 4, format, tooltip, empty, ariaLabel }: Props) {
   const [ref, width] = useWidth<HTMLDivElement>()
   const [hover, setHover] = useState<number | null>(null)
 
@@ -41,7 +43,7 @@ export function LineChart({ points: line, target, height = 160, yMax, format, to
   const maxX = Math.max(...pts.map((p) => p.lesson), 2)
   const minX = Math.min(...pts.map((p) => p.lesson), 1)
   const dataMax = Math.max(...pts.map((p) => p.value), target?.value ?? 0)
-  const yTicks = yMax !== undefined ? niceTicks(yMax) : niceTicks(dataMax * 1.1)
+  const yTicks = yMax !== undefined ? niceTicks(yMax, yCount) : niceTicks(dataMax * 1.1, yCount)
   const top = yTicks[yTicks.length - 1]
   const w = width - M.left - M.right
   const h = height - M.top - M.bottom
