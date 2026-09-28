@@ -3,13 +3,14 @@ import { useT } from '../i18n'
 import type { Badge } from '../rewards/badges'
 import { BadgeIcon } from './BadgeIcon'
 import { useApp } from '../store/app'
+import type { Stars } from '../rewards/rewards'
 
 export interface RoundResult {
   wpm: number
   accuracy: number
   slowest: { ch: string; ms: number }[]
   newKeys: string[]
-  stars: 1 | 2 | 3
+  stars: Stars
   goalJustDone: boolean
   streak: number
   levelUp: string | null
@@ -23,12 +24,12 @@ export function ResultCard({ result, onNext }: { result: RoundResult; onNext: ()
   return (
     <div className="rounded-2xl bg-white/85 backdrop-blur shadow-lg p-8 text-center space-y-6">
       <div>
-        <div className="flex justify-center gap-3 text-5xl">
-          {[1, 2, 3].map((n) => (
+        <div className="flex justify-center gap-2 text-5xl">
+          {[1, 2, 3, 4, 5].map((n) => (
             <span
               key={n}
               className={n <= result.stars ? 'animate-[pop_400ms_ease-out_both]' : 'grayscale opacity-25'}
-              style={{ animationDelay: `${(n - 1) * 180}ms` }}
+              style={{ animationDelay: `${(n - 1) * 150}ms` }}
             >
               ⭐
             </span>

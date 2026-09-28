@@ -4,6 +4,7 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from '../../src/App'
 import { ResultCard } from '../../src/components/ResultCard'
+import { SyncBadge } from '../../src/components/SyncBadge'
 import { UNITS, unitChars } from '../../src/lessons/curriculum'
 import { BADGES } from '../../src/rewards/badges'
 import { useApp } from '../../src/store/app'
@@ -101,6 +102,27 @@ describe('ResultCard', () => {
     noBadText()
     fireEvent.click(screen.getByRole('button'))
     expect(onNext).toHaveBeenCalled()
+  })
+})
+
+describe('SyncBadge', () => {
+  it('spins while syncing and stops at the end of a turn once the sync is done', () => {
+    const { container } = render(<SyncBadge />)
+    const svg = () => container.querySelector('svg')!
+    const button = screen.getByRole('button')
+    expect(svg().getAttribute('class')).not.toContain('animate-spin')
+    act(() => useApp.setState({ status: 'syncing' }))
+    expect(svg().getAttribute('class')).toContain('animate-spin')
+    const width = button.className
+    act(() => useApp.setState({ status: 'ok' }))
+    expect(svg().getAttribute('class')).toContain('animate-spin') // finishes the current turn
+    expect(button.className).toContain('w-9')
+    expect(button.className.replace(/text-\S+/g, '')).toBe(width.replace(/text-\S+/g, ''))
+    // jsdom has no AnimationEvent, so React listens for the prefixed name there.
+    act(() => {
+      for (const type of ['animationiteration', 'webkitAnimationIteration']) svg().dispatchEvent(new Event(type, { bubbles: true }))
+    })
+    expect(svg().getAttribute('class')).not.toContain('animate-spin')
   })
 })
 

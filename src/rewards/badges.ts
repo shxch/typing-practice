@@ -17,7 +17,7 @@ interface Ctx {
   bestWpm: number
   bestAcc: number
   perfectRounds: number
-  threeStarRounds: number
+  fiveStarRounds: number
   /** Consecutive rounds (so far) at 95%+ accuracy. */
   accurateRun: number
   bestAccurateRun: number
@@ -71,13 +71,12 @@ export const BADGES: Badge[] = [
     [500, '👑', '龙族传奇', 'Dragon Legend', '完成 500 轮练习', 'Finish 500 rounds'],
   ]),
   ...tiers('speed', (c) => c.bestWpm, [
-    // Slowest to fastest, as in the books: easygoing RainWings first, SkyWings (the fastest fliers) last.
-    [30, '🦎', 'RainWing 慢慢飞', 'RainWing Glide', '单轮速度达到 30 WPM', 'Reach 30 WPM in a round'],
-    [40, '🍃', 'LeafWing 之速', 'LeafWing Speed', '单轮速度达到 40 WPM', 'Reach 40 WPM in a round'],
-    [50, '🌊', 'SeaWing 之速', 'SeaWing Speed', '单轮速度达到 50 WPM', 'Reach 50 WPM in a round'],
-    [60, '🏜️', 'SandWing 之速', 'SandWing Speed', '单轮速度达到 60 WPM', 'Reach 60 WPM in a round'],
+    // Slowest to fastest: SeaWing, NightWing, SandWing, RainWing, then SkyWing (the fastest fliers).
+    [30, '🌊', 'SeaWing 之速', 'SeaWing Speed', '单轮速度达到 30 WPM', 'Reach 30 WPM in a round'],
+    [40, '🌙', 'NightWing 之速', 'NightWing Speed', '单轮速度达到 40 WPM', 'Reach 40 WPM in a round'],
+    [50, '🏜️', 'SandWing 之速', 'SandWing Speed', '单轮速度达到 50 WPM', 'Reach 50 WPM in a round'],
+    [60, '🦎', 'RainWing 之速', 'RainWing Speed', '单轮速度达到 60 WPM', 'Reach 60 WPM in a round'],
     [70, '☁️', 'SkyWing 之速', 'SkyWing Speed', '单轮速度达到 70 WPM', 'Reach 70 WPM in a round'],
-    [80, '⚡', '闪电之翼', 'Lightning Wings', '单轮速度达到 80 WPM', 'Reach 80 WPM in a round'],
   ]),
   ...tiers('accuracy', (c) => c.perfectRounds, [
     [1, '💎', '零失误', 'Flawless', '有一轮 100% 全对', 'A round with 100% accuracy'],
@@ -104,10 +103,10 @@ export const BADGES: Badge[] = [
     [24, '🌍', '环游 Pyrrhia', 'Around Pyrrhia', '累计练习 24 小时', 'Practice 24 hours in total'],
     [50, '🗺️', '远航 Pantala', 'Voyage to Pantala', '累计练习 50 小时', 'Practice 50 hours in total'],
   ]),
-  ...tiers('stars', (c) => c.threeStarRounds, [
-    [1, '⭐', '第一个三星', 'First Three Stars', '有一轮拿到三颗星', 'Get three stars in a round'],
-    [10, '✨', '星光熠熠', 'Starry Night', '10 轮拿到三颗星', 'Three stars in 10 rounds'],
-    [50, '🌌', '满天星辰', 'Sky Full of Stars', '50 轮拿到三颗星', 'Three stars in 50 rounds'],
+  ...tiers('stars', (c) => c.fiveStarRounds, [
+    [1, '⭐', '第一个五星', 'First Five Stars', '有一轮拿到五颗星', 'Get five stars in a round'],
+    [10, '✨', '星光熠熠', 'Starry Night', '10 轮拿到五颗星', 'Five stars in 10 rounds'],
+    [50, '🌌', '满天星辰', 'Sky Full of Stars', '50 轮拿到五颗星', 'Five stars in 50 rounds'],
   ]),
   ...tiers('keys', (c) => c.maxUnits, [
     [LOWER_UNITS, '🔤', '小写字母全掌握', 'All Lowercase', '解锁全部 26 个小写字母', 'Unlock all 26 lowercase letters'],
@@ -139,7 +138,7 @@ export function computeBadges(sessions: Session[], r: BadgeRules, currentUnits =
     bestWpm: 0,
     bestAcc: 0,
     perfectRounds: 0,
-    threeStarRounds: 0,
+    fiveStarRounds: 0,
     accurateRun: 0,
     bestAccurateRun: 0,
     dayStreak: 0,
@@ -163,7 +162,7 @@ export function computeBadges(sessions: Session[], r: BadgeRules, currentUnits =
     c.bestWpm = Math.max(c.bestWpm, s.wpm)
     c.bestAcc = Math.max(c.bestAcc, s.accuracy)
     if (s.accuracy >= 0.9999) c.perfectRounds++
-    if (starsFor(s, r) === 3) c.threeStarRounds++
+    if (starsFor(s, r) === 5) c.fiveStarRounds++
     c.accurateRun = s.accuracy >= 0.95 ? c.accurateRun + 1 : 0
     c.bestAccurateRun = Math.max(c.bestAccurateRun, c.accurateRun)
     // Only what practice unlocked counts; a manual jump on the course slider doesn't.

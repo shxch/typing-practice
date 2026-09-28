@@ -9,23 +9,31 @@ export interface StarRules {
   targetAccuracy: number
 }
 
+export type Stars = 1 | 2 | 3 | 4 | 5
+
+/** Speed (as a share of the target) needed for 3, 4 and 5 stars. */
+export const STAR_SPEEDS = [0.8, 1, 1.2] as const
+
 /**
- * 1 star for finishing, 2 for a careful round (accuracy on target),
- * 3 for careful *and* fast (also at target speed).
+ * 1 star for finishing, 2 for a careful round (accuracy on target); on top of that,
+ * 3 at 80% of the target speed, 4 at the target speed and 5 at 120% of it.
  * Accuracy comes first on purpose: it's the habit that matters most for a beginner.
  */
-export function starsFor(s: Pick<Session, 'wpm' | 'accuracy'>, r: StarRules): 1 | 2 | 3 {
-  if (s.accuracy >= r.targetAccuracy && s.wpm >= r.targetWpm) return 3
-  if (s.accuracy >= r.targetAccuracy) return 2
-  return 1
+export function starsFor(s: Pick<Session, 'wpm' | 'accuracy'>, r: StarRules): Stars {
+  if (s.accuracy < r.targetAccuracy) return 1
+  const fast = STAR_SPEEDS.filter((f) => s.wpm >= f * r.targetWpm).length
+  return (2 + fast) as Stars
 }
 
 export function totalStars(sessions: Session[], r: StarRules): number {
   return sessions.reduce((a, s) => a + starsFor(s, r), 0)
 }
 
-/** Stars needed to reach each level. Gaps grow slowly so there's always a next level in sight. */
-export const LEVEL_STARS = [0, 10, 25, 45, 70, 100, 140, 190, 250, 320, 400, 500, 620, 760, 920, 1100]
+/**
+ * Stars needed to reach each level. Gaps grow slowly so there's always a next level in sight.
+ * Sized for up to 5 stars a round.
+ */
+export const LEVEL_STARS = [0, 15, 40, 75, 115, 165, 230, 315, 415, 530, 665, 830, 1030, 1265, 1530, 1830]
 
 export function levelOf(stars: number): { level: number; current: number; next: number | null } {
   let level = 0

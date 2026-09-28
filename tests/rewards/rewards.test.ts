@@ -5,15 +5,19 @@ import { dayAt, makeSession } from '../helpers/session'
 const R = { targetWpm: 25, targetAccuracy: 0.95 }
 
 describe('stars', () => {
-  it('1 for finishing, 2 for careful, 3 for careful and fast — exactly at target counts', () => {
+  it('1 for finishing, 2 for careful, 3/4/5 for careful at 80%/100%/120% of target speed', () => {
     expect(starsFor({ wpm: 50, accuracy: 0.9 }, R)).toBe(1)
     expect(starsFor({ wpm: 10, accuracy: 0.95 }, R)).toBe(2)
-    expect(starsFor({ wpm: 25, accuracy: 0.95 }, R)).toBe(3)
-    expect(starsFor({ wpm: 24.99, accuracy: 1 }, R)).toBe(2)
+    expect(starsFor({ wpm: 19.99, accuracy: 1 }, R)).toBe(2)
+    expect(starsFor({ wpm: 20, accuracy: 0.95 }, R)).toBe(3)
+    expect(starsFor({ wpm: 24.99, accuracy: 1 }, R)).toBe(3)
+    expect(starsFor({ wpm: 25, accuracy: 0.95 }, R)).toBe(4)
+    expect(starsFor({ wpm: 29.99, accuracy: 1 }, R)).toBe(4)
+    expect(starsFor({ wpm: 30, accuracy: 0.95 }, R)).toBe(5)
   })
 
   it('totals over sessions', () => {
-    expect(totalStars([makeSession({ wpm: 30, accuracy: 1 }), makeSession({ wpm: 1, accuracy: 0.5 })], R)).toBe(4)
+    expect(totalStars([makeSession({ wpm: 30, accuracy: 1 }), makeSession({ wpm: 1, accuracy: 0.5 })], R)).toBe(6)
     expect(totalStars([], R)).toBe(0)
   })
 })

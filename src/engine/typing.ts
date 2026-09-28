@@ -4,7 +4,8 @@ export type ErrorMode = 'stop' | 'backspace'
 
 /**
  * Per-character stats.
- * n = correct hits, miss = wrong presses when this char was expected,
+ * n = correct hits, miss = characters mistyped when this char was expected (a character
+ * mistyped several times counts once),
  * t = hits that produced a timing sample, ms = total time of those samples.
  */
 export interface KeyStat {
@@ -118,7 +119,8 @@ export function typeChar(state: TypingState, ch: string, now: number): TypingSta
     if (!correct) {
       const missed = state.missed.slice()
       missed[state.pos] = true
-      return { ...base, missed, keyStats: bump(state.keyStats, expected, { miss: 1 }) }
+      const keyStats = state.missed[state.pos] ? state.keyStats : bump(state.keyStats, expected, { miss: 1 })
+      return { ...base, missed, keyStats }
     }
     const marks = state.marks.slice()
     marks[state.pos] = state.missed[state.pos] ? 'fixed' : 'ok'
@@ -152,7 +154,9 @@ export function typeChar(state: TypingState, ch: string, now: number): TypingSta
     correctPresses: state.correctPresses + (correct ? 1 : 0),
     keyStats: correct
       ? bump(state.keyStats, expected, hit(timed, !state.missed[state.pos], gap))
-      : bump(state.keyStats, expected, { miss: 1 }),
+      : state.missed[state.pos]
+        ? state.keyStats
+        : bump(state.keyStats, expected, { miss: 1 }),
     done: pos >= state.text.length,
   }
 }
@@ -183,8 +187,15 @@ export function wpm(state: Pick<TypingState, 'marks' | 'elapsedMs' | 'timed'>): 
   return correct / 5 / (state.elapsedMs / 60000)
 }
 
-export function accuracy(state: Pick<TypingState, 'presses' | 'correctPresses'>): number {
-  return state.presses === 0 ? 1 : state.correctPresses / state.presses
+/**
+ * Share of characters typed right on the first try. A character mistyped several times is
+ * one mistake, not several. The character under the cursor counts once it has been missed.
+ */
+export function accuracy(state: Pick<TypingState, 'pos' | 'missed'>): number {
+  const last = state.missed.lastIndexOf(true)
+  const attempted = Math.max(state.pos, last + 1)
+  if (attempted === 0) return 1
+  return 1 - state.missed.filter(Boolean).length / attempted
 }
 
 /** Average milliseconds per clean hit, or null if there is no timing sample. */

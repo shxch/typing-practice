@@ -44,7 +44,19 @@ describe('stop mode (a mistake must be fixed before moving on)', () => {
     expect(s.marks).toEqual(['ok', 'fixed'])
     expect(s.keyStats.j).toEqual({ n: 1, miss: 1, t: 0, ms: 0 })
     expect(s.done).toBe(true)
-    expect(accuracy(s)).toBeCloseTo(2 / 3)
+    expect(accuracy(s)).toBeCloseTo(1 / 2)
+  })
+
+  it('a character mistyped several times counts as one mistake', () => {
+    let s = createState('fj', 'stop')
+    s = typeChar(s, 'f', 1000)
+    s = typeChar(s, 'k', 1200)
+    s = typeChar(s, 'l', 1300)
+    s = typeChar(s, 'k', 1400)
+    expect(s.keyStats.j.miss).toBe(1)
+    expect(accuracy(s)).toBeCloseTo(1 / 2)
+    s = typeChar(s, 'j', 1500)
+    expect(accuracy(s)).toBeCloseTo(1 / 2)
   })
 
   it('finishes exactly on the last character', () => {
@@ -86,6 +98,19 @@ describe('backspace mode (keep going, fix with Backspace)', () => {
     expect(s.typed).toEqual([])
     s = typeChar(s, 'a', 1200)
     expect(s.marks[0]).toBe('fixed')
+  })
+
+  it('mistyping the same character again after backspace is still one mistake', () => {
+    let s = createState('ab', 'backspace')
+    s = typeChar(s, 'x', 1000)
+    s = backspace(s)
+    s = typeChar(s, 'y', 1100)
+    s = backspace(s)
+    expect(s.keyStats.a.miss).toBe(1)
+    expect(accuracy(s)).toBe(0)
+    s = typeChar(s, 'a', 1200)
+    s = typeChar(s, 'b', 1300)
+    expect(accuracy(s)).toBeCloseTo(1 / 2)
   })
 
   it('cannot go before the start', () => {
@@ -199,6 +224,6 @@ describe('helpers', () => {
   })
 
   it('accuracy is 1 before any press', () => {
-    expect(accuracy({ presses: 0, correctPresses: 0 })).toBe(1)
+    expect(accuracy({ pos: 0, missed: [false, false] })).toBe(1)
   })
 })
