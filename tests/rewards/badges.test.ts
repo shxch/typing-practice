@@ -73,7 +73,7 @@ describe('earning', () => {
   it('newBadges reports only the newly earned ones', () => {
     const before = computeBadges([makeSession({ wpm: 25, startedAt: 1 })], R)
     const after = computeBadges([makeSession({ wpm: 25, startedAt: 1 }), makeSession({ wpm: 42, startedAt: 2 })], R)
-    expect(newBadges(before, after).map((b) => b.id).sort()).toEqual(['speed-30', 'speed-40', 'stars-1'])
+    expect(newBadges(before, after).map((b) => b.id).sort()).toEqual(['speed-30', 'speed-40'])
   })
 })
 

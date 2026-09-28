@@ -4,7 +4,7 @@
 import { UNITS } from '../lessons/curriculum'
 import { dayKey } from '../lessons/stats'
 import type { Session } from '../store/types'
-import { starsFor, type StarRules } from './rewards'
+import { inPlayOrder, starsByRound, type StarRules } from './rewards'
 
 export interface BadgeRules extends StarRules {
   dailyGoalMinutes: number
@@ -131,7 +131,8 @@ export interface BadgeState {
  * away, before another round is played.
  */
 export function computeBadges(sessions: Session[], r: BadgeRules, currentUnits = 0): BadgeState[] {
-  const sorted = [...sessions].sort((a, b) => a.startedAt - b.startedAt)
+  const sorted = inPlayOrder(sessions)
+  const stars = starsByRound(sorted, r)
   const c: Ctx = {
     rounds: 0,
     timeMs: 0,
@@ -162,7 +163,7 @@ export function computeBadges(sessions: Session[], r: BadgeRules, currentUnits =
     c.bestWpm = Math.max(c.bestWpm, s.wpm)
     c.bestAcc = Math.max(c.bestAcc, s.accuracy)
     if (s.accuracy >= 0.9999) c.perfectRounds++
-    if (starsFor(s, r) === 5) c.fiveStarRounds++
+    if (stars.get(s.id) === 5) c.fiveStarRounds++
     c.accurateRun = s.accuracy >= 0.95 ? c.accurateRun + 1 : 0
     c.bestAccurateRun = Math.max(c.bestAccurateRun, c.accurateRun)
     // Only what practice unlocked counts; a manual jump on the course slider doesn't.

@@ -10,7 +10,7 @@ import { UNITS, computeProgress, type Progress } from '../lessons/curriculum'
 import { generateLesson } from '../lessons/generate'
 import { dayKey } from '../lessons/stats'
 import { computeBadges, newBadges } from '../rewards/badges'
-import { levelOf, minutesOn, starsFor, streak, totalStars } from '../rewards/rewards'
+import { levelOf, minutesOn, starsByRound, streak, totalStars } from '../rewards/rewards'
 import { playCorrect, playDelete, playError, playFinish, playUnlock } from '../sound/sound'
 import { useApp } from '../store/app'
 import type { InProgress, Session } from '../store/types'
@@ -128,7 +128,7 @@ export function Practice() {
         accuracy: session.accuracy,
         slowest: slowestKeys(state.keyStats),
         newKeys,
-        stars: starsFor(session, settings),
+        stars: starsByRound(after, settings).get(session.id) ?? 1,
         goalJustDone,
         streak: streak(after, goal),
         levelUp: levelAfter > levelBefore ? t.levels[Math.min(levelAfter, t.levels.length - 1)] : null,

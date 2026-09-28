@@ -35,7 +35,7 @@ export function ResultCard({ result, onNext }: { result: RoundResult; onNext: ()
             </span>
           ))}
         </div>
-        <div className="text-xs text-slate-400 mt-2">{t.starHint}</div>
+        <div className="text-xs text-slate-400 mt-2 max-w-md mx-auto leading-relaxed">{t.starHint}</div>
       </div>
       {result.goalJustDone && (
         <div className="rounded-xl bg-emerald-500 text-white py-3 text-xl font-bold">

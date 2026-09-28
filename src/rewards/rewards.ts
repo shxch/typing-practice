@@ -11,22 +11,61 @@ export interface StarRules {
 
 export type Stars = 1 | 2 | 3 | 4 | 5
 
-/** Speed (as a share of the target) needed for 3, 4 and 5 stars. */
-export const STAR_SPEEDS = [0.8, 1, 1.2] as const
+/** How many earlier rounds a round is compared with. */
+export const STAR_WINDOW = 10
+/** With fewer earlier rounds than this, the target speed stands in for them. */
+export const STAR_MIN_HISTORY = 3
+/** Accuracy needed on top of a record score for the fifth star. */
+export const FIVE_STAR_ACCURACY = 0.98
+
+/** One number for a round: speed discounted by mistakes (a "net speed"). */
+export const roundScore = (s: Pick<Session, 'wpm' | 'accuracy'>) => s.wpm * s.accuracy
+
+/** Value at fraction `q` of the sorted list, interpolating between neighbours. */
+function quantile(sorted: number[], q: number): number {
+  const at = (sorted.length - 1) * q
+  const lo = Math.floor(at)
+  return sorted[lo] + (sorted[Math.min(lo + 1, sorted.length - 1)] - sorted[lo]) * (at - lo)
+}
 
 /**
- * 1 star for finishing, 2 for a careful round (accuracy on target); on top of that,
- * 3 at 80% of the target speed, 4 at the target speed and 5 at 120% of it.
- * Accuracy comes first on purpose: it's the habit that matters most for a beginner.
+ * Stars for a round, measured against the player's own recent rounds so every level has a
+ * next step: 1 for finishing, 2 for accuracy on target; then, by score (speed × accuracy)
+ * against the last 10 rounds, 3 at their median, 4 at their top quarter and 5 for matching
+ * the best of them at 98%+ accuracy. Until there are 3 earlier rounds, 80% / 100% / 120%
+ * of the target score stand in for median / top quarter / best.
+ *
+ * `earlier` must be the rounds before this one, oldest first.
  */
-export function starsFor(s: Pick<Session, 'wpm' | 'accuracy'>, r: StarRules): Stars {
+export function starsFor(s: Pick<Session, 'wpm' | 'accuracy'>, earlier: Pick<Session, 'wpm' | 'accuracy'>[], r: StarRules): Stars {
   if (s.accuracy < r.targetAccuracy) return 1
-  const fast = STAR_SPEEDS.filter((f) => s.wpm >= f * r.targetWpm).length
-  return (2 + fast) as Stars
+  const recent = earlier.slice(-STAR_WINDOW).map(roundScore).sort((a, b) => a - b)
+  const target = r.targetWpm * r.targetAccuracy
+  const [mid, top, best] =
+    recent.length < STAR_MIN_HISTORY
+      ? [0.8 * target, target, 1.2 * target]
+      : [quantile(recent, 0.5), quantile(recent, 0.75), recent[recent.length - 1]]
+  const score = roundScore(s)
+  if (score >= best && s.accuracy >= Math.max(r.targetAccuracy, FIVE_STAR_ACCURACY)) return 5
+  if (score >= top) return 4
+  if (score >= mid) return 3
+  return 2
+}
+
+/** Rounds in the order they were played (ties by id, so every device agrees). */
+export const inPlayOrder = <T extends Pick<Session, 'startedAt' | 'id'>>(sessions: T[]): T[] =>
+  [...sessions].sort((a, b) => a.startedAt - b.startedAt || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
+
+/** Stars of every round, by session id. */
+export function starsByRound(sessions: Session[], r: StarRules): Map<string, Stars> {
+  const sorted = inPlayOrder(sessions)
+  return new Map(sorted.map((s, i) => [s.id, starsFor(s, sorted.slice(Math.max(0, i - STAR_WINDOW), i), r)]))
 }
 
 export function totalStars(sessions: Session[], r: StarRules): number {
-  return sessions.reduce((a, s) => a + starsFor(s, r), 0)
+  let total = 0
+  for (const n of starsByRound(sessions, r).values()) total += n
+  return total
 }
 
 /**
