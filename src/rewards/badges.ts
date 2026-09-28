@@ -72,12 +72,12 @@ export const BADGES: Badge[] = [
   ]),
   ...tiers('speed', (c) => c.bestWpm, [
     // Slowest to fastest, as in the books: easygoing RainWings first, SkyWings (the fastest fliers) last.
-    [10, '🦎', 'RainWing 慢慢飞', 'RainWing Glide', '单轮速度达到 10 WPM', 'Reach 10 WPM in a round'],
-    [20, '🍃', 'LeafWing 之速', 'LeafWing Speed', '单轮速度达到 20 WPM', 'Reach 20 WPM in a round'],
-    [30, '🌊', 'SeaWing 之速', 'SeaWing Speed', '单轮速度达到 30 WPM', 'Reach 30 WPM in a round'],
-    [40, '🏜️', 'SandWing 之速', 'SandWing Speed', '单轮速度达到 40 WPM', 'Reach 40 WPM in a round'],
-    [50, '☁️', 'SkyWing 之速', 'SkyWing Speed', '单轮速度达到 50 WPM', 'Reach 50 WPM in a round'],
-    [60, '⚡', '闪电之翼', 'Lightning Wings', '单轮速度达到 60 WPM', 'Reach 60 WPM in a round'],
+    [30, '🦎', 'RainWing 慢慢飞', 'RainWing Glide', '单轮速度达到 30 WPM', 'Reach 30 WPM in a round'],
+    [40, '🍃', 'LeafWing 之速', 'LeafWing Speed', '单轮速度达到 40 WPM', 'Reach 40 WPM in a round'],
+    [50, '🌊', 'SeaWing 之速', 'SeaWing Speed', '单轮速度达到 50 WPM', 'Reach 50 WPM in a round'],
+    [60, '🏜️', 'SandWing 之速', 'SandWing Speed', '单轮速度达到 60 WPM', 'Reach 60 WPM in a round'],
+    [70, '☁️', 'SkyWing 之速', 'SkyWing Speed', '单轮速度达到 70 WPM', 'Reach 70 WPM in a round'],
+    [80, '⚡', '闪电之翼', 'Lightning Wings', '单轮速度达到 80 WPM', 'Reach 80 WPM in a round'],
   ]),
   ...tiers('accuracy', (c) => c.perfectRounds, [
     [1, '💎', '零失误', 'Flawless', '有一轮 100% 全对', 'A round with 100% accuracy'],

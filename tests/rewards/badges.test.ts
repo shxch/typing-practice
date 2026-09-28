@@ -39,9 +39,9 @@ describe('earning', () => {
   })
 
   it('speed tiers use the best single round', () => {
-    const ids = earned(computeBadges([makeSession({ wpm: 41 }), makeSession({ wpm: 12 })], R))
-    expect(ids).toEqual(expect.arrayContaining(['speed-10', 'speed-20', 'speed-30', 'speed-40']))
-    expect(ids).not.toContain('speed-50')
+    const ids = earned(computeBadges([makeSession({ wpm: 61 }), makeSession({ wpm: 32 })], R))
+    expect(ids).toEqual(expect.arrayContaining(['speed-30', 'speed-40', 'speed-50', 'speed-60']))
+    expect(ids).not.toContain('speed-70')
   })
 
   it('an accurate run resets after a sloppy round', () => {
@@ -71,9 +71,9 @@ describe('earning', () => {
   })
 
   it('newBadges reports only the newly earned ones', () => {
-    const before = computeBadges([makeSession({ wpm: 5, startedAt: 1 })], R)
-    const after = computeBadges([makeSession({ wpm: 5, startedAt: 1 }), makeSession({ wpm: 22, startedAt: 2 })], R)
-    expect(newBadges(before, after).map((b) => b.id).sort()).toEqual(['speed-10', 'speed-20'])
+    const before = computeBadges([makeSession({ wpm: 25, startedAt: 1 })], R)
+    const after = computeBadges([makeSession({ wpm: 25, startedAt: 1 }), makeSession({ wpm: 42, startedAt: 2 })], R)
+    expect(newBadges(before, after).map((b) => b.id).sort()).toEqual(['speed-30', 'speed-40'])
   })
 })
 
