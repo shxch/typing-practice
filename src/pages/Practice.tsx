@@ -192,12 +192,7 @@ export function Practice() {
       </div>
 
       {showKeyStats && (
-        <div className={`${panel} px-5 py-3 space-y-2`}>
-          <div className="text-sm text-slate-600">
-            <span className="font-semibold text-theme-700">{stageName}</span>
-            <span className="mx-2">·</span>
-            {t.unlockedUnits(progress.unlockedUnits, UNITS.length)}
-          </div>
+        <div className={`${panel} px-5 py-3`}>
           <KeyPanel
             progress={progress}
             sessions={sessions}
@@ -241,6 +236,13 @@ export function Practice() {
             <span>
               {settings.errorMode === 'stop' ? t.hintStop : t.hintBackspace}
               {st.pos === 0 && t.hintStart}
+            header={
+              <div className="text-sm text-slate-600 pb-0.5">
+                <span className="font-semibold text-theme-700">{stageName}</span>
+                <span className="mx-2">·</span>
+                {t.unlockedUnits(progress.unlockedUnits, UNITS.length)}
+              </div>
+            }
             </span>
             {st.pos > 0 && toggle(t.newText, newRound)}
             {toggle(showKeyboard ? t.hideKeyboard : t.showKeyboard, () => setConfig({ showKeyboard: !showKeyboard }))}

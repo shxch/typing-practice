@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, type ReactNode } from 'react'
 import { msToWpm } from '../engine/typing'
 import { useT } from '../i18n'
 import { UNITS, meetsTarget, targetMs, type Progress, type Stage, type UnlockSettings } from '../lessons/curriculum'
@@ -21,10 +21,12 @@ interface Props {
   settings: UnlockSettings & { targetWpm: number }
   selected: string | null
   onSelect: (ch: string) => void
+  /** Shown above the key tiles, so the chart column can start at the top. */
+  header?: ReactNode
 }
 
 /** keybr-style key overview: every key's speed at a glance, plus the chosen key's progress chart. */
-export function KeyPanel({ progress, sessions, settings, selected, onSelect }: Props) {
+export function KeyPanel({ progress, sessions, settings, selected, onSelect, header }: Props) {
   const t = useT()
   const sorted = useMemo(() => byTime(Object.values(sessions)), [sessions])
   const key = selected && progress.unlocked.has(selected) ? selected : progress.focus
@@ -39,6 +41,7 @@ export function KeyPanel({ progress, sessions, settings, selected, onSelect }: P
     <div className="@container">
     <div className="grid gap-x-5 gap-y-3 @3xl:grid-cols-[minmax(0,11fr)_minmax(0,9fr)]">
       <div className="space-y-1.5">
+        {header}
         {stages.map((stage) => (
           <div key={stage}>
             {stages.length > 1 && <div className="text-xs text-slate-500 mb-1">{stageName[stage]}</div>}
