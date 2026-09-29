@@ -1,4 +1,8 @@
+import { useMemo } from 'react'
 import { useT } from '../i18n'
+import { computeProgress } from '../lessons/curriculum'
+import { computeBadges } from '../rewards/badges'
+import { BadgeIcon } from './BadgeIcon'
 import { dayKey } from '../lessons/stats'
 import { levelOf, minutesOn, streak, totalStars } from '../rewards/rewards'
 import type { Session, SyncedSettings } from '../store/types'
@@ -8,10 +12,12 @@ interface Props {
   settings: SyncedSettings
   /** Time spent in the round being typed right now, so the bar moves while typing. */
   liveMs: number
+  /** Open the badge wall. */
+  onOpenBadges?: () => void
 }
 
 /** Today's goal, streak and level — the reasons to come back tomorrow. */
-export function DailyBar({ sessions, settings, liveMs }: Props) {
+export function DailyBar({ sessions, settings, liveMs, onOpenBadges }: Props) {
   const t = useT()
   const goal = settings.dailyGoalMinutes
   const today = minutesOn(sessions, dayKey(Date.now())) + liveMs / 60000
@@ -20,6 +26,13 @@ export function DailyBar({ sessions, settings, liveMs }: Props) {
   const stars = totalStars(sessions, settings)
   const lv = levelOf(stars)
   const name = t.levels[Math.min(lv.level, t.levels.length - 1)]
+  const lang = settings.lang
+  const states = useMemo(
+    () => computeBadges(sessions, settings, computeProgress(sessions, settings).earnedUnits),
+    [sessions, settings],
+  )
+  const earned = states.filter((s) => s.earnedAt !== null)
+  const latest = earned.reduce<(typeof earned)[number] | null>((a, b) => (a && a.earnedAt! >= b.earnedAt! ? a : b), null)
   const levelShare = lv.next === null ? 1 : (stars - lv.current) / (lv.next - lv.current)
 
   return (
@@ -48,8 +61,16 @@ export function DailyBar({ sessions, settings, liveMs }: Props) {
         <div className="font-semibold text-slate-800">{days > 0 ? t.streakDays(days) : t.streakNone}</div>
       </div>
 
-      <div className="flex items-center gap-3 min-w-56 flex-1">
-        <span className="text-3xl">⭐</span>
+      <button
+        type="button"
+        onClick={(e) => {
+          onOpenBadges?.()
+          e.currentTarget.blur()
+        }}
+        title={t.levelOpenBadges}
+        className="flex items-center gap-3 min-w-56 flex-1 text-left rounded-xl hover:bg-theme-50 -m-1.5 p-1.5"
+      >
+        {latest ? <BadgeIcon badge={latest.badge} size={52} /> : <span className="text-3xl w-[52px] text-center">⭐</span>}
         <div className="flex-1">
           <div className="flex items-baseline gap-2">
             <span className="font-semibold text-slate-800">
@@ -64,8 +85,11 @@ export function DailyBar({ sessions, settings, liveMs }: Props) {
             />
           </div>
           <div className="text-xs text-slate-500 mt-0.5">{lv.next === null ? t.maxLevel : t.starsToNext(lv.next - stars)}</div>
+          <div className="text-xs text-slate-500">
+            {latest ? t.latestBadge(latest.badge.name[lang], earned.length, states.length) : t.noBadgeYet}
+          </div>
         </div>
-      </div>
+      </button>
     </div>
   )
 }
