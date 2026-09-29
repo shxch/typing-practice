@@ -9,7 +9,8 @@ export interface StarRules {
   targetAccuracy: number
 }
 
-export type Stars = 1 | 2 | 3 | 4 | 5
+/** 6 is the hidden rainbow star: never announced, only earned by an outstanding round. */
+export type Stars = 1 | 2 | 3 | 4 | 5 | 6
 
 /** One number for a round: speed discounted by mistakes (a "net speed"). */
 export const roundScore = (s: Pick<Session, 'wpm' | 'accuracy'>) => s.wpm * s.accuracy
@@ -17,14 +18,19 @@ export const roundScore = (s: Pick<Session, 'wpm' | 'accuracy'>) => s.wpm * s.ac
 /** Net speed needed for 2 / 3 / 4 / 5 stars, as a share of the target (target speed × target accuracy). */
 export const STAR_CUTS = [0.3, 0.5, 0.75, 1] as const
 
+/** The hidden sixth star: net speed at 150% of the target, with 98%+ accuracy. */
+export const RAINBOW_CUT = 1.5
+export const RAINBOW_ACCURACY = 0.98
+
 /**
  * Stars for a round from its speed and accuracy alone: the net speed (speed × accuracy, so
  * mistakes count against it) as a share of the target. Generous on purpose: 30% of the target
- * is already 2 stars, 50% is 3, 75% is 4, and reaching the target is 5.
+ * is already 2 stars, 50% is 3, 75% is 4, and reaching the target is 5. Beating it by half at 98%+ accuracy is a secret sixth (rainbow) star.
  */
 export function starsFor(s: Pick<Session, 'wpm' | 'accuracy'>, r: StarRules): Stars {
   const target = r.targetWpm * r.targetAccuracy
   const score = roundScore(s)
+  if (score >= RAINBOW_CUT * target && s.accuracy >= RAINBOW_ACCURACY) return 6
   return (1 + STAR_CUTS.filter((c) => score >= c * target).length) as Stars
 }
 

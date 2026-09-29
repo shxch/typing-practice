@@ -17,6 +17,36 @@ export interface RoundResult {
   badges: Badge[]
 }
 
+/** The hidden sixth star, only drawn when it is earned. */
+function RainbowStar() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="w-[1em] h-[1em] animate-[pop_500ms_ease-out_both] drop-shadow-[0_0_6px_rgba(168,85,247,0.6)]"
+      style={{ animationDelay: '750ms' }}
+      aria-label="rainbow star"
+    >
+      <defs>
+        <linearGradient id="rainbow-star" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#ef4444" />
+          <stop offset="20%" stopColor="#f59e0b" />
+          <stop offset="40%" stopColor="#eab308" />
+          <stop offset="60%" stopColor="#22c55e" />
+          <stop offset="80%" stopColor="#3b82f6" />
+          <stop offset="100%" stopColor="#a855f7" />
+        </linearGradient>
+      </defs>
+      <path
+        d="M12 1.8l3 6.8 7.4.7-5.6 4.9 1.7 7.3L12 17.7l-6.5 3.8 1.7-7.3L1.6 9.3l7.4-.7z"
+        fill="url(#rainbow-star)"
+        stroke="#fff"
+        strokeWidth="0.8"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
 export function ResultCard({ result, onNext }: { result: RoundResult; onNext: () => void }) {
   const t = useT()
   const lang = useApp((s) => s.shared.settings.lang)
@@ -34,6 +64,7 @@ export function ResultCard({ result, onNext }: { result: RoundResult; onNext: ()
               ⭐
             </span>
           ))}
+          {result.stars === 6 && <RainbowStar />}
         </div>
       </div>
       {result.goalJustDone && (

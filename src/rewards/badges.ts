@@ -163,7 +163,7 @@ export function computeBadges(sessions: Session[], r: BadgeRules, currentUnits =
     c.bestWpm = Math.max(c.bestWpm, s.wpm)
     c.bestAcc = Math.max(c.bestAcc, s.accuracy)
     if (s.accuracy >= 0.9999) c.perfectRounds++
-    if (stars.get(s.id) === 5) c.fiveStarRounds++
+    if ((stars.get(s.id) ?? 0) >= 5) c.fiveStarRounds++
     c.accurateRun = s.accuracy >= 0.95 ? c.accurateRun + 1 : 0
     c.bestAccurateRun = Math.max(c.bestAccurateRun, c.accurateRun)
     // Only what practice unlocked counts; a manual jump on the course slider doesn't.

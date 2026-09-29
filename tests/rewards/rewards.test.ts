@@ -20,6 +20,12 @@ describe('stars', () => {
     expect(starsFor({ wpm: 25, accuracy: 0.4 }, R)).toBe(2) // 10
   })
 
+  it('a hidden sixth star needs 150% of the target and 98%+ accuracy', () => {
+    expect(starsFor({ wpm: 36, accuracy: 1 }, R)).toBe(6) // 36 ≥ 35.6
+    expect(starsFor({ wpm: 36, accuracy: 0.97 }, R)).toBe(5) // fast, but not clean enough
+    expect(starsFor({ wpm: 35, accuracy: 1 }, R)).toBe(5)
+  })
+
   it('a higher target makes the same round worth fewer stars', () => {
     expect(starsFor({ wpm: 24, accuracy: 1 }, { targetWpm: 40, targetAccuracy: 0.95 })).toBe(3)
   })
