@@ -7,28 +7,30 @@ const R = { targetWpm: 25, targetAccuracy: 0.95 }
 describe('stars', () => {
   const rounds = (...wpms: number[]) => wpms.map((wpm) => ({ wpm, accuracy: 1 }))
 
-  it('1 for finishing, 2 for accuracy on target', () => {
+  it('under the accuracy target is always 1 star', () => {
     expect(starsFor({ wpm: 50, accuracy: 0.9 }, [], R)).toBe(1)
-    expect(starsFor({ wpm: 10, accuracy: 0.95 }, [], R)).toBe(2)
   })
 
-  it('with little history the target score (25 × 95% = 23.75) stands in: 80% / 100% / 120%', () => {
+  it('with little history the target score (25 × 95% = 23.75) stands in: 50% / 80% / 100% / 120%', () => {
+    expect(starsFor({ wpm: 10, accuracy: 0.95 }, [], R)).toBe(1) // 9.5
+    expect(starsFor({ wpm: 14, accuracy: 0.95 }, [], R)).toBe(2) // 13.3
     expect(starsFor({ wpm: 20, accuracy: 0.95 }, [], R)).toBe(3) // 19
     expect(starsFor({ wpm: 25, accuracy: 0.95 }, rounds(40, 40), R)).toBe(4) // 23.75
     expect(starsFor({ wpm: 30, accuracy: 0.95 }, [], R)).toBe(5) // 28.5
   })
 
-  it('then against the last 10 rounds: bottom 10%, bottom 60%, top 10%', () => {
-    const last10 = rounds(10, 11, 12, 13, 14, 15, 16, 17, 18, 19) // 10% 10.9, 60% 15.4, 90% 18.1
-    expect(starsFor({ wpm: 10.8, accuracy: 1 }, last10, R)).toBe(2)
-    expect(starsFor({ wpm: 10.9, accuracy: 1 }, last10, R)).toBe(3)
-    expect(starsFor({ wpm: 15.4, accuracy: 1 }, last10, R)).toBe(4)
+  it('then against the last 10 rounds: 10% / 20% / 30% / 20% / 10%', () => {
+    const last10 = rounds(10, 11, 12, 13, 14, 15, 16, 17, 18, 19) // cuts 10.9, 13.6, 16.3, 18.1
+    expect(starsFor({ wpm: 10.8, accuracy: 1 }, last10, R)).toBe(1)
+    expect(starsFor({ wpm: 10.9, accuracy: 1 }, last10, R)).toBe(2)
+    expect(starsFor({ wpm: 13.6, accuracy: 1 }, last10, R)).toBe(3)
+    expect(starsFor({ wpm: 16.3, accuracy: 1 }, last10, R)).toBe(4)
     expect(starsFor({ wpm: 18.1, accuracy: 1 }, last10, R)).toBe(5)
   })
 
   it('mistakes lower the score', () => {
     const last10 = rounds(10, 11, 12, 13, 14, 15, 16, 17, 18, 19)
-    expect(starsFor({ wpm: 16, accuracy: 0.95 }, last10, R)).toBe(3) // 15.2
+    expect(starsFor({ wpm: 17, accuracy: 0.95 }, last10, R)).toBe(3) // 16.15
   })
 
   it('only the last 10 rounds count, so an old fast round does not block five stars', () => {

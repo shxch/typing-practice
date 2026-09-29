@@ -28,10 +28,11 @@ function quantile(sorted: number[], q: number): number {
 
 /**
  * Stars for a round, measured against the player's own recent rounds so every level has a
- * next step: 1 for finishing, 2 for accuracy on target; then, by score (speed × accuracy)
- * against the last 10 rounds, aiming at about 10% five stars, 30% four, 50% three and the
- * rest two: 3 above their bottom 10%, 4 above their bottom 60%, 5 in their top 10%. Until
- * there are 3 earlier rounds, 80% / 100% / 120% of the target score stand in for those.
+ * next step. Under the target accuracy it is always 1. Otherwise the score (speed × accuracy)
+ * is ranked against the last 10 rounds, aiming at 10% one star, 20% two, 30% three, 20% four
+ * and 10% five: 2 above their bottom 10%, 3 above the bottom 30%, 4 above the bottom 60%,
+ * 5 in the top 10%. Until there are 3 earlier rounds, 50% / 80% / 100% / 120% of the target
+ * score stand in for those.
  *
  * `earlier` must be the rounds before this one, oldest first.
  */
@@ -39,15 +40,12 @@ export function starsFor(s: Pick<Session, 'wpm' | 'accuracy'>, earlier: Pick<Ses
   if (s.accuracy < r.targetAccuracy) return 1
   const recent = earlier.slice(-STAR_WINDOW).map(roundScore).sort((a, b) => a - b)
   const target = r.targetWpm * r.targetAccuracy
-  const [low, mid, high] =
+  const cuts =
     recent.length < STAR_MIN_HISTORY
-      ? [0.8 * target, target, 1.2 * target]
-      : [quantile(recent, 0.1), quantile(recent, 0.6), quantile(recent, 0.9)]
+      ? [0.5 * target, 0.8 * target, target, 1.2 * target]
+      : [quantile(recent, 0.1), quantile(recent, 0.4), quantile(recent, 0.7), quantile(recent, 0.9)]
   const score = roundScore(s)
-  if (score >= high) return 5
-  if (score >= mid) return 4
-  if (score >= low) return 3
-  return 2
+  return (1 + cuts.filter((c) => score >= c).length) as Stars
 }
 
 /** Rounds in the order they were played (ties by id, so every device agrees). */
