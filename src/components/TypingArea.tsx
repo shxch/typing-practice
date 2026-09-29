@@ -42,7 +42,12 @@ export function TypingArea({ state, large = false }: { state: TypingState; large
     const el = place()
     // Long lessons can be taller than the screen: while typing, keep the current line visible.
     if (el && !newText && state.pos > 0) el.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' })
+    // ResizeObserver fires once right after observe(); ignoring that first call keeps it from
+    // switching the transition off mid-slide (which made the caret look like it teleported).
+    let lastW = box.clientWidth
     const ro = new ResizeObserver(() => {
+      if (box.clientWidth === lastW) return
+      lastW = box.clientWidth
       setAnimate(false)
       place()
     })
@@ -71,7 +76,7 @@ export function TypingArea({ state, large = false }: { state: TypingState; large
             width: caret.w,
             height: caret.h,
             transform: `translate(${caret.x}px, ${caret.y}px)`,
-            transition: animate ? 'transform 110ms cubic-bezier(0.25, 0.8, 0.35, 1), width 110ms' : 'none',
+            transition: animate ? 'transform 140ms cubic-bezier(0.25, 0.8, 0.35, 1), width 140ms' : 'none',
           }}
         >
           <div
