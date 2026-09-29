@@ -31,7 +31,7 @@ function freshLesson(progress: Progress, words: number, mode: InProgress['state'
 
 const panel = 'rounded-2xl bg-white/80 backdrop-blur shadow-lg'
 
-export function Practice({ onOpenBadges }: { onOpenBadges?: () => void }) {
+export function Practice() {
   const sessions = useApp((s) => s.sessions)
   const settings = useApp((s) => s.shared.settings)
   const inProgress = useApp((s) => s.shared.inProgress)
@@ -225,7 +225,7 @@ export function Practice({ onOpenBadges }: { onOpenBadges?: () => void }) {
   return (
     <div className="space-y-4">
       <div className={`${panel} px-5 py-4`}>
-        <DailyBar sessions={sessionList} settings={settings} liveMs={inProgress ? st.elapsedMs : 0} onOpenBadges={onOpenBadges} />
+        <DailyBar sessions={sessionList} settings={settings} liveMs={inProgress ? st.elapsedMs : 0} />
       </div>
 
       {showKeyStats && (

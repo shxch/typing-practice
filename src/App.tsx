@@ -100,7 +100,7 @@ export default function App() {
           </nav>
         </header>
       </div>
-      <main className="max-w-5xl mx-auto px-6 pt-5 pb-12">{page === 'practice' ? <Practice onOpenBadges={() => setPage('badges')} /> : page === 'stats' ? <Stats /> : page === 'badges' ? <Badges /> : <Settings />}</main>
+      <main className="max-w-5xl mx-auto px-6 pt-5 pb-12">{page === 'practice' ? <Practice /> : page === 'stats' ? <Stats /> : page === 'badges' ? <Badges /> : <Settings />}</main>
     </div>
   )
 }
