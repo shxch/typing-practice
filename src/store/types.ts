@@ -57,7 +57,7 @@ export type Lang = 'zh' | 'en'
 export const DEFAULT_SETTINGS: SyncedSettings = {
   targetWpm: 25,
   targetAccuracy: 0.95,
-  minSamples: 15,
+  minSamples: 10,
   manualUnits: null,
   lessonWords: 20,
   errorMode: 'stop',
