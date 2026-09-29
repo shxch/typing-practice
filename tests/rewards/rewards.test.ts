@@ -5,43 +5,29 @@ import { dayAt, makeSession } from '../helpers/session'
 const R = { targetWpm: 25, targetAccuracy: 0.95 }
 
 describe('stars', () => {
-  const rounds = (...wpms: number[]) => wpms.map((wpm) => ({ wpm, accuracy: 1 }))
-
-  it('with little history the target score (25 × 95% = 23.75) stands in: 20% / 35% / 50% / 70%', () => {
-    expect(starsFor({ wpm: 4, accuracy: 0.95 }, [], R)).toBe(1) // 3.8
-    expect(starsFor({ wpm: 6, accuracy: 0.95 }, [], R)).toBe(2) // 5.7
-    expect(starsFor({ wpm: 10, accuracy: 0.95 }, [], R)).toBe(3) // 9.5
-    expect(starsFor({ wpm: 15, accuracy: 0.95 }, rounds(40, 40), R)).toBe(4) // 14.25
-    expect(starsFor({ wpm: 20, accuracy: 0.95 }, [], R)).toBe(5) // 19
-  })
-
-  it('then against the last 10 rounds: 10% / 20% / 30% / 20% / 10%', () => {
-    const last10 = rounds(10, 11, 12, 13, 14, 15, 16, 17, 18, 19) // cuts 10.9, 13.6, 16.3, 18.1
-    expect(starsFor({ wpm: 10.8, accuracy: 1 }, last10, R)).toBe(1)
-    expect(starsFor({ wpm: 10.9, accuracy: 1 }, last10, R)).toBe(2)
-    expect(starsFor({ wpm: 13.6, accuracy: 1 }, last10, R)).toBe(3)
-    expect(starsFor({ wpm: 16.3, accuracy: 1 }, last10, R)).toBe(4)
-    expect(starsFor({ wpm: 18.1, accuracy: 1 }, last10, R)).toBe(5)
+  // Target net speed: 25 × 95% = 23.75; cuts at 30% / 50% / 75% / 100% = 7.1, 11.9, 17.8, 23.75
+  it('depends only on speed and accuracy, against the target', () => {
+    expect(starsFor({ wpm: 7, accuracy: 1 }, R)).toBe(1)
+    expect(starsFor({ wpm: 8, accuracy: 1 }, R)).toBe(2)
+    expect(starsFor({ wpm: 12, accuracy: 1 }, R)).toBe(3)
+    expect(starsFor({ wpm: 18, accuracy: 1 }, R)).toBe(4)
+    expect(starsFor({ wpm: 24, accuracy: 1 }, R)).toBe(5)
   })
 
   it('mistakes lower the score', () => {
-    const last10 = rounds(10, 11, 12, 13, 14, 15, 16, 17, 18, 19)
-    expect(starsFor({ wpm: 17, accuracy: 0.95 }, last10, R)).toBe(3) // 16.15
+    expect(starsFor({ wpm: 25, accuracy: 0.95 }, R)).toBe(5) // 23.75
+    expect(starsFor({ wpm: 25, accuracy: 0.8 }, R)).toBe(4) // 20
+    expect(starsFor({ wpm: 25, accuracy: 0.4 }, R)).toBe(2) // 10
   })
 
-  it('only the last 10 rounds count, so an old fast round does not block five stars', () => {
-    expect(starsFor({ wpm: 19, accuracy: 1 }, rounds(100, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19), R)).toBe(5)
+  it('a higher target makes the same round worth fewer stars', () => {
+    expect(starsFor({ wpm: 24, accuracy: 1 }, { targetWpm: 40, targetAccuracy: 0.95 })).toBe(3)
   })
 
-  it('a slow beginner still has every star within reach', () => {
-    expect(starsFor({ wpm: 12, accuracy: 1 }, rounds(10, 11, 12), R)).toBe(5)
-  })
-
-  it('rounds are rated in play order, whatever order they are stored in', () => {
-    const list = [30, 10, 11, 12, 13].map((wpm, i) => makeSession({ id: `r${i}`, wpm, accuracy: 1, startedAt: i === 0 ? 99 : i }))
+  it('rounds are rated one by one, whatever else was played', () => {
+    const list = [30, 10, 11].map((wpm, i) => makeSession({ id: `r${i}`, wpm, accuracy: 1, startedAt: i }))
     const stars = starsByRound(list, R)
-    expect(stars.get('r4')).toBe(5) // 13 beats 10, 11, 12
-    expect(stars.get('r0')).toBe(5) // played last, beats them all
+    expect([...stars.values()]).toEqual([5, 2, 2])
   })
 
   it('totals over sessions', () => {
