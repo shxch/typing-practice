@@ -77,6 +77,14 @@ describe('earning', () => {
     expect(get(computeBadges(list(40), R), 'stars-rainbow').badge.hidden).toBe(true)
   })
 
+  it('a badge for every level reached', () => {
+    // 5 stars a round; level 2 needs 15 stars
+    const list = (n: number) => Array.from({ length: n }, (_, i) => makeSession({ wpm: 30, accuracy: 1, startedAt: i + 1 }))
+    expect(get(computeBadges(list(2), R), 'level-2').earnedAt).toBeNull()
+    expect(get(computeBadges(list(3), R), 'level-2').earnedAt).not.toBeNull()
+    expect(get(computeBadges(list(3), R), 'level-3').earnedAt).toBeNull()
+  })
+
   it('newBadges reports only the newly earned ones', () => {
     const before = computeBadges([makeSession({ wpm: 25, startedAt: 1 })], R)
     const after = computeBadges([makeSession({ wpm: 25, startedAt: 1 }), makeSession({ wpm: 42, startedAt: 2 })], R)

@@ -5,7 +5,7 @@ import { computeProgress } from '../lessons/curriculum'
 import { computeBadges, type BadgeGroup, type BadgeState } from '../rewards/badges'
 import { useApp } from '../store/app'
 
-const GROUPS: BadgeGroup[] = ['rounds', 'speed', 'accuracy', 'streak', 'stars', 'time', 'keys']
+const GROUPS: BadgeGroup[] = ['rounds', 'speed', 'accuracy', 'streak', 'stars', 'level', 'time', 'keys']
 
 /** The badge wall: earned badges in color with their date, the rest greyed with progress. */
 export function Badges() {

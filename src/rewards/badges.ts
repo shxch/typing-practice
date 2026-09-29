@@ -4,7 +4,7 @@
 import { UNITS } from '../lessons/curriculum'
 import { dayKey } from '../lessons/stats'
 import type { Session } from '../store/types'
-import { inPlayOrder, starsByRound, type StarRules } from './rewards'
+import { inPlayOrder, levelOf, starsByRound, type StarRules } from './rewards'
 
 export interface BadgeRules extends StarRules {
   dailyGoalMinutes: number
@@ -19,6 +19,9 @@ interface Ctx {
   perfectRounds: number
   fiveStarRounds: number
   rainbowRounds: number
+  /** Stars earned so far, and the level they add up to (1 = the first). */
+  stars: number
+  level: number
   /** Consecutive rounds (so far) at 95%+ accuracy. */
   accurateRun: number
   bestAccurateRun: number
@@ -30,7 +33,7 @@ interface Ctx {
   devices: number
 }
 
-export type BadgeGroup = 'rounds' | 'speed' | 'accuracy' | 'streak' | 'time' | 'stars' | 'keys'
+export type BadgeGroup = 'rounds' | 'speed' | 'accuracy' | 'streak' | 'time' | 'stars' | 'level' | 'keys'
 
 export interface Badge {
   id: string
@@ -120,6 +123,24 @@ export const BADGES: Badge[] = [
     desc: { zh: '有一轮拿到隐藏的彩虹星', en: 'Earn the hidden rainbow star in a round' },
     progress: (c) => ratio(c.rainbowRounds, 1),
   },
+  // One per level-up, named after the level (see `levels` in i18n.ts).
+  ...tiers('level', (c) => c.level, [
+    [2, '⌨️', '键盘新手', 'Key Rookie', '升到 Lv.2', 'Reach level 2'],
+    [3, '🧭', '字母探险家', 'Letter Explorer', '升到 Lv.3', 'Reach level 3'],
+    [4, '⚔️', '单词小勇士', 'Word Warrior', '升到 Lv.4', 'Reach level 4'],
+    [5, '🛡️', '键盘骑士', 'Key Knight', '升到 Lv.5', 'Reach level 5'],
+    [6, '🌟', '速度小明星', 'Rising Star', '升到 Lv.6', 'Reach level 6'],
+    [7, '🦸', '打字飞侠', 'Flying Fingers', '升到 Lv.7', 'Reach level 7'],
+    [8, '🪄', '键盘魔法师', 'Keyboard Wizard', '升到 Lv.8', 'Reach level 8'],
+    [9, '⚡', '闪电手指', 'Lightning Hands', '升到 Lv.9', 'Reach level 9'],
+    [10, '🥋', '打字大侠', 'Typing Hero', '升到 Lv.10', 'Reach level 10'],
+    [11, '🎖️', '键盘大师', 'Key Master', '升到 Lv.11', 'Reach level 11'],
+    [12, '🏅', '打字宗师', 'Grand Master', '升到 Lv.12', 'Reach level 12'],
+    [13, '🏆', '键盘传奇', 'Keyboard Legend', '升到 Lv.13', 'Reach level 13'],
+    [14, '🚀', '光速打字王', 'Light-Speed Typist', '升到 Lv.14', 'Reach level 14'],
+    [15, '🔱', '打字之神', 'Typing Titan', '升到 Lv.15', 'Reach level 15'],
+    [16, '🪐', '宇宙第一打字王', 'Galactic Champion', '升到 Lv.16', 'Reach level 16'],
+  ]),
   ...tiers('keys', (c) => c.maxUnits, [
     [LOWER_UNITS, '🔤', '小写字母全掌握', 'All Lowercase', '解锁全部 26 个小写字母', 'Unlock all 26 lowercase letters'],
     [CAPITAL_UNITS, '🔠', '大写字母全掌握', 'All Capitals', '解锁全部大写字母', 'Unlock all capital letters'],
@@ -153,6 +174,8 @@ export function computeBadges(sessions: Session[], r: BadgeRules, currentUnits =
     perfectRounds: 0,
     fiveStarRounds: 0,
     rainbowRounds: 0,
+    stars: 0,
+    level: 1,
     accurateRun: 0,
     bestAccurateRun: 0,
     dayStreak: 0,
@@ -178,6 +201,8 @@ export function computeBadges(sessions: Session[], r: BadgeRules, currentUnits =
     if (s.accuracy >= 0.9999) c.perfectRounds++
     if ((stars.get(s.id) ?? 0) >= 5) c.fiveStarRounds++
     if (stars.get(s.id) === 6) c.rainbowRounds++
+    c.stars += stars.get(s.id) ?? 0
+    c.level = levelOf(c.stars).level + 1
     c.accurateRun = s.accuracy >= 0.95 ? c.accurateRun + 1 : 0
     c.bestAccurateRun = Math.max(c.bestAccurateRun, c.accurateRun)
     // Only what practice unlocked counts; a manual jump on the course slider doesn't.
