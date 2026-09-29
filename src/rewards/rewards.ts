@@ -28,21 +28,20 @@ function quantile(sorted: number[], q: number): number {
 
 /**
  * Stars for a round, measured against the player's own recent rounds so every level has a
- * next step. Under the target accuracy it is always 1. Otherwise the score (speed × accuracy)
- * is ranked against the last 10 rounds, aiming at 10% one star, 20% two, 30% three, 20% four
- * and 10% five: 2 above their bottom 10%, 3 above the bottom 30%, 4 above the bottom 60%,
- * 5 in the top 10%. Until there are 3 earlier rounds, 50% / 80% / 100% / 120% of the target
- * score stand in for those.
+ * next step. The score (speed × accuracy, so mistakes already count against it) is ranked
+ * against the last 10 rounds, aiming at 10% one star, 20% two, 30% three, 20% four and
+ * 10% five: 2 above their bottom 10%, 3 above the bottom 30%, 4 above the bottom 60%,
+ * 5 in the top 10%. Until there are 3 earlier rounds, 20% / 35% / 50% / 70% of the target
+ * score stand in for those, so a beginner is not stuck on one star.
  *
  * `earlier` must be the rounds before this one, oldest first.
  */
 export function starsFor(s: Pick<Session, 'wpm' | 'accuracy'>, earlier: Pick<Session, 'wpm' | 'accuracy'>[], r: StarRules): Stars {
-  if (s.accuracy < r.targetAccuracy) return 1
   const recent = earlier.slice(-STAR_WINDOW).map(roundScore).sort((a, b) => a - b)
   const target = r.targetWpm * r.targetAccuracy
   const cuts =
     recent.length < STAR_MIN_HISTORY
-      ? [0.5 * target, 0.8 * target, target, 1.2 * target]
+      ? [0.2 * target, 0.35 * target, 0.5 * target, 0.7 * target]
       : [quantile(recent, 0.1), quantile(recent, 0.4), quantile(recent, 0.7), quantile(recent, 0.9)]
   const score = roundScore(s)
   return (1 + cuts.filter((c) => score >= c).length) as Stars

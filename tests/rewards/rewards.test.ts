@@ -7,16 +7,12 @@ const R = { targetWpm: 25, targetAccuracy: 0.95 }
 describe('stars', () => {
   const rounds = (...wpms: number[]) => wpms.map((wpm) => ({ wpm, accuracy: 1 }))
 
-  it('under the accuracy target is always 1 star', () => {
-    expect(starsFor({ wpm: 50, accuracy: 0.9 }, [], R)).toBe(1)
-  })
-
-  it('with little history the target score (25 × 95% = 23.75) stands in: 50% / 80% / 100% / 120%', () => {
-    expect(starsFor({ wpm: 10, accuracy: 0.95 }, [], R)).toBe(1) // 9.5
-    expect(starsFor({ wpm: 14, accuracy: 0.95 }, [], R)).toBe(2) // 13.3
-    expect(starsFor({ wpm: 20, accuracy: 0.95 }, [], R)).toBe(3) // 19
-    expect(starsFor({ wpm: 25, accuracy: 0.95 }, rounds(40, 40), R)).toBe(4) // 23.75
-    expect(starsFor({ wpm: 30, accuracy: 0.95 }, [], R)).toBe(5) // 28.5
+  it('with little history the target score (25 × 95% = 23.75) stands in: 20% / 35% / 50% / 70%', () => {
+    expect(starsFor({ wpm: 4, accuracy: 0.95 }, [], R)).toBe(1) // 3.8
+    expect(starsFor({ wpm: 6, accuracy: 0.95 }, [], R)).toBe(2) // 5.7
+    expect(starsFor({ wpm: 10, accuracy: 0.95 }, [], R)).toBe(3) // 9.5
+    expect(starsFor({ wpm: 15, accuracy: 0.95 }, rounds(40, 40), R)).toBe(4) // 14.25
+    expect(starsFor({ wpm: 20, accuracy: 0.95 }, [], R)).toBe(5) // 19
   })
 
   it('then against the last 10 rounds: 10% / 20% / 30% / 20% / 10%', () => {
