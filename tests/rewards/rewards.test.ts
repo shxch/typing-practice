@@ -15,22 +15,20 @@ describe('stars', () => {
   it('with little history the target score (25 × 95% = 23.75) stands in: 80% / 100% / 120%', () => {
     expect(starsFor({ wpm: 20, accuracy: 0.95 }, [], R)).toBe(3) // 19
     expect(starsFor({ wpm: 25, accuracy: 0.95 }, rounds(40, 40), R)).toBe(4) // 23.75
-    expect(starsFor({ wpm: 30, accuracy: 0.95 }, [], R)).toBe(4) // 28.5, but under 98% accuracy
-    expect(starsFor({ wpm: 30, accuracy: 0.98 }, [], R)).toBe(5)
+    expect(starsFor({ wpm: 30, accuracy: 0.95 }, [], R)).toBe(5) // 28.5
   })
 
-  it('then against the last 10 rounds: median, top quarter, best', () => {
-    const last10 = rounds(10, 11, 12, 13, 14, 15, 16, 17, 18, 19) // median 14.5, top quarter 16.75
-    expect(starsFor({ wpm: 14.4, accuracy: 1 }, last10, R)).toBe(2)
-    expect(starsFor({ wpm: 14.5, accuracy: 1 }, last10, R)).toBe(3)
-    expect(starsFor({ wpm: 16.75, accuracy: 1 }, last10, R)).toBe(4)
-    expect(starsFor({ wpm: 19, accuracy: 1 }, last10, R)).toBe(5)
-    expect(starsFor({ wpm: 19.5, accuracy: 0.97 }, last10, R)).toBe(4) // record-ish, not careful enough
+  it('then against the last 10 rounds: bottom 10%, bottom 60%, top 10%', () => {
+    const last10 = rounds(10, 11, 12, 13, 14, 15, 16, 17, 18, 19) // 10% 10.9, 60% 15.4, 90% 18.1
+    expect(starsFor({ wpm: 10.8, accuracy: 1 }, last10, R)).toBe(2)
+    expect(starsFor({ wpm: 10.9, accuracy: 1 }, last10, R)).toBe(3)
+    expect(starsFor({ wpm: 15.4, accuracy: 1 }, last10, R)).toBe(4)
+    expect(starsFor({ wpm: 18.1, accuracy: 1 }, last10, R)).toBe(5)
   })
 
   it('mistakes lower the score', () => {
     const last10 = rounds(10, 11, 12, 13, 14, 15, 16, 17, 18, 19)
-    expect(starsFor({ wpm: 17, accuracy: 0.95 }, last10, R)).toBe(3) // 16.15
+    expect(starsFor({ wpm: 16, accuracy: 0.95 }, last10, R)).toBe(3) // 15.2
   })
 
   it('only the last 10 rounds count, so an old fast round does not block five stars', () => {

@@ -15,8 +15,6 @@ export type Stars = 1 | 2 | 3 | 4 | 5
 export const STAR_WINDOW = 10
 /** With fewer earlier rounds than this, the target speed stands in for them. */
 export const STAR_MIN_HISTORY = 3
-/** Accuracy needed on top of a record score for the fifth star. */
-export const FIVE_STAR_ACCURACY = 0.98
 
 /** One number for a round: speed discounted by mistakes (a "net speed"). */
 export const roundScore = (s: Pick<Session, 'wpm' | 'accuracy'>) => s.wpm * s.accuracy
@@ -31,9 +29,9 @@ function quantile(sorted: number[], q: number): number {
 /**
  * Stars for a round, measured against the player's own recent rounds so every level has a
  * next step: 1 for finishing, 2 for accuracy on target; then, by score (speed × accuracy)
- * against the last 10 rounds, 3 at their median, 4 at their top quarter and 5 for matching
- * the best of them at 98%+ accuracy. Until there are 3 earlier rounds, 80% / 100% / 120%
- * of the target score stand in for median / top quarter / best.
+ * against the last 10 rounds, aiming at about 10% five stars, 30% four, 50% three and the
+ * rest two: 3 above their bottom 10%, 4 above their bottom 60%, 5 in their top 10%. Until
+ * there are 3 earlier rounds, 80% / 100% / 120% of the target score stand in for those.
  *
  * `earlier` must be the rounds before this one, oldest first.
  */
@@ -41,14 +39,14 @@ export function starsFor(s: Pick<Session, 'wpm' | 'accuracy'>, earlier: Pick<Ses
   if (s.accuracy < r.targetAccuracy) return 1
   const recent = earlier.slice(-STAR_WINDOW).map(roundScore).sort((a, b) => a - b)
   const target = r.targetWpm * r.targetAccuracy
-  const [mid, top, best] =
+  const [low, mid, high] =
     recent.length < STAR_MIN_HISTORY
       ? [0.8 * target, target, 1.2 * target]
-      : [quantile(recent, 0.5), quantile(recent, 0.75), recent[recent.length - 1]]
+      : [quantile(recent, 0.1), quantile(recent, 0.6), quantile(recent, 0.9)]
   const score = roundScore(s)
-  if (score >= best && s.accuracy >= Math.max(r.targetAccuracy, FIVE_STAR_ACCURACY)) return 5
-  if (score >= top) return 4
-  if (score >= mid) return 3
+  if (score >= high) return 5
+  if (score >= mid) return 4
+  if (score >= low) return 3
   return 2
 }
 
