@@ -70,6 +70,13 @@ describe('earning', () => {
     expect(get(computeBadges(list, R), 'keys-2').earnedAt).not.toBeNull()
   })
 
+  it('the rainbow badge is hidden and needs the sixth star', () => {
+    const list = (wpm: number) => [makeSession({ wpm, accuracy: 1, startedAt: 1 })]
+    expect(get(computeBadges(list(30), R), 'stars-rainbow').earnedAt).toBeNull()
+    expect(get(computeBadges(list(40), R), 'stars-rainbow').earnedAt).not.toBeNull()
+    expect(get(computeBadges(list(40), R), 'stars-rainbow').badge.hidden).toBe(true)
+  })
+
   it('newBadges reports only the newly earned ones', () => {
     const before = computeBadges([makeSession({ wpm: 25, startedAt: 1 })], R)
     const after = computeBadges([makeSession({ wpm: 25, startedAt: 1 }), makeSession({ wpm: 42, startedAt: 2 })], R)

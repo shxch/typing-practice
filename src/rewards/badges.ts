@@ -18,6 +18,7 @@ interface Ctx {
   bestAcc: number
   perfectRounds: number
   fiveStarRounds: number
+  rainbowRounds: number
   /** Consecutive rounds (so far) at 95%+ accuracy. */
   accurateRun: number
   bestAccurateRun: number
@@ -37,6 +38,8 @@ export interface Badge {
   icon: string
   name: { zh: string; en: string }
   desc: { zh: string; en: string }
+  /** Kept secret (not listed, not counted) until it is earned. */
+  hidden?: boolean
   /** Progress toward the badge, 0..1 (1 = earned). */
   progress: (c: Ctx) => number
 }
@@ -108,6 +111,15 @@ export const BADGES: Badge[] = [
     [10, '✨', '星光熠熠', 'Starry Night', '10 轮拿到五颗星', 'Five stars in 10 rounds'],
     [50, '🌌', '满天星辰', 'Sky Full of Stars', '50 轮拿到五颗星', 'Five stars in 50 rounds'],
   ]),
+  {
+    id: 'stars-rainbow',
+    group: 'stars',
+    hidden: true,
+    icon: '🌈',
+    name: { zh: '彩虹龙', en: 'Rainbow Dragon' },
+    desc: { zh: '有一轮拿到隐藏的彩虹星', en: 'Earn the hidden rainbow star in a round' },
+    progress: (c) => ratio(c.rainbowRounds, 1),
+  },
   ...tiers('keys', (c) => c.maxUnits, [
     [LOWER_UNITS, '🔤', '小写字母全掌握', 'All Lowercase', '解锁全部 26 个小写字母', 'Unlock all 26 lowercase letters'],
     [CAPITAL_UNITS, '🔠', '大写字母全掌握', 'All Capitals', '解锁全部大写字母', 'Unlock all capital letters'],
@@ -140,6 +152,7 @@ export function computeBadges(sessions: Session[], r: BadgeRules, currentUnits =
     bestAcc: 0,
     perfectRounds: 0,
     fiveStarRounds: 0,
+    rainbowRounds: 0,
     accurateRun: 0,
     bestAccurateRun: 0,
     dayStreak: 0,
@@ -164,6 +177,7 @@ export function computeBadges(sessions: Session[], r: BadgeRules, currentUnits =
     c.bestAcc = Math.max(c.bestAcc, s.accuracy)
     if (s.accuracy >= 0.9999) c.perfectRounds++
     if ((stars.get(s.id) ?? 0) >= 5) c.fiveStarRounds++
+    if (stars.get(s.id) === 6) c.rainbowRounds++
     c.accurateRun = s.accuracy >= 0.95 ? c.accurateRun + 1 : 0
     c.bestAccurateRun = Math.max(c.bestAccurateRun, c.accurateRun)
     // Only what practice unlocked counts; a manual jump on the course slider doesn't.

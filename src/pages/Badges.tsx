@@ -16,14 +16,16 @@ export function Badges() {
   const list = useMemo(() => Object.values(sessions), [sessions])
   const units = useMemo(() => computeProgress(list, settings).earnedUnits, [list, settings])
   const states = useMemo(() => computeBadges(list, settings, units), [list, settings, units])
-  const earnedCount = states.filter((s) => s.earnedAt !== null).length
+  // Hidden badges stay off the wall (and out of the count) until they are earned.
+  const shown = useMemo(() => states.filter((s) => !s.badge.hidden || s.earnedAt !== null), [states])
+  const earnedCount = shown.filter((s) => s.earnedAt !== null).length
 
   return (
     <div className="space-y-5">
       <div className="rounded-2xl bg-white/85 backdrop-blur shadow px-6 py-5 flex items-center gap-4">
         <span className="text-4xl">🏅</span>
         <div className="flex-1">
-          <div className="text-xl font-bold text-slate-800">{t.badgesEarned(earnedCount, states.length)}</div>
+          <div className="text-xl font-bold text-slate-800">{t.badgesEarned(earnedCount, shown.length)}</div>
           <div className="text-sm text-slate-500">{t.badgesHint}</div>
         </div>
       </div>
@@ -32,7 +34,7 @@ export function Badges() {
         <section key={g} className="rounded-2xl bg-white/85 backdrop-blur shadow p-5">
           <h2 className="font-bold text-slate-800 mb-3">{t.badgeGroups[g]}</h2>
           <div className="grid gap-3 grid-cols-[repeat(auto-fill,minmax(150px,1fr))]">
-            {states
+            {shown
               .filter((s) => s.badge.group === g)
               .map((state) => (
                 <BadgeCard key={state.badge.id} state={state} lang={lang} />
