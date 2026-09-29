@@ -34,6 +34,7 @@ const HEADS: Record<string, [aspect: number, x: number, y: number, r: number]> =
   'stars-1': [0.773, 0.55, 0.12, 0.15],
   'stars-10': [0.804, 0.6, 0.12, 0.18],
   'stars-50': [0.946, 0.5, 0.5, 0],
+  'stars-rainbow': [1.596, 0.08, 0.35, 0.07],
   'streak-1': [1.61, 0.07, 0.45, 0.07],
   'streak-100': [0.675, 0.55, 0.35, 0.42],
   'streak-14': [1.373, 0.08, 0.25, 0.08],
