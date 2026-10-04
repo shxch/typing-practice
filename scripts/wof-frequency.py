@@ -11,8 +11,8 @@ A word is written in lowercase unless it is (almost) always capitalized in the b
 so "dragon" stays "dragon" even at the start of a sentence, and "Clay" and "NightWing"
 keep their capitals.
 
-PDFs need `pip install pypdf` and a text layer: scanned books and graphic novels are only
-pictures, so they are skipped (and listed).
+PDFs need `pip install pypdf` and a text layer. A scanned book is only pictures and is
+skipped (and listed): run scripts/ocr-pdf.py on it first, which leaves its text in corpus/ocr/.
 """
 import os
 import re
