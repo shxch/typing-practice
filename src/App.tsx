@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import pandaLogo from './assets/panda.svg'
+import dragonLogo from './assets/dragon.svg'
 import { Background, useDecodedWallpaper, useWallpaperFit } from './components/Background'
 import { SyncBadge } from './components/SyncBadge'
 import { findWallpaper, useWallpapers } from './content/wallpapers'
@@ -80,7 +80,7 @@ export default function App() {
       <div className="max-w-5xl mx-auto px-6 pt-4">
         <header className="flex flex-wrap gap-3 items-center justify-between rounded-2xl bg-white/80 backdrop-blur shadow px-5 py-3">
           <h1 className="flex items-center gap-2.5 text-2xl font-extrabold text-theme-700">
-            <img src={pandaLogo} alt="" className="w-10 h-10 drop-shadow-sm" />
+            <img src={dragonLogo} alt="" className="w-10 h-10 drop-shadow-sm" />
             {t.appTitle}
           </h1>
           <nav className="flex items-center gap-2">

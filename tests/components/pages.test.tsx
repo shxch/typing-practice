@@ -70,7 +70,7 @@ describe.each([
 describe('language toggle', () => {
   it('switches the whole app', () => {
     render(<App />)
-    expect(document.title).toBe('熊猫打字')
+    expect(document.title).toBe('飞龙打字')
     act(() => fireEvent.click(screen.getByTitle('Switch to English')))
     expect(useApp.getState().shared.settings.lang).toBe('en')
     expect(document.documentElement.lang).toBe('en')

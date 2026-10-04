@@ -2,7 +2,7 @@ import { useApp } from './store/app'
 import type { Lang } from './store/types'
 
 const zh = {
-  appTitle: '熊猫打字',
+  appTitle: '飞龙打字',
   navPractice: '练习',
   navSettings: '设置',
   langToggle: 'EN',
@@ -166,7 +166,7 @@ const zh = {
 type Dict = typeof zh
 
 const en: Dict = {
-  appTitle: 'Typing Panda',
+  appTitle: 'Typing Dragon',
   navPractice: 'Practice',
   navSettings: 'Settings',
   langToggle: '中',
