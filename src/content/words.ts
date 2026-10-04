@@ -55,7 +55,12 @@ world worm would write wrong yard year yellow yes yesterday yet you young your z
 able ads aid aim ale all alas asks elf ideal jade kale kid lad lads lake lakes leaf lease led less self sell
 sells shelf sled slide sale sake safe seek seeks fee feel feels fed fad fade fades deal deals desk desks dessert
 dad dads sad sadly salad salads flea fleas flask ask asked seal seals sea seas see sees seed seeds lease jail
-jell else eel eels ease easel dive dial did die dies fiddle field file files fill fills fin find fire firs
+jell else eel eels ease easel
+fake fakes flake flakes sleek keel keels leak leaks leaked leek leeks elk elks skedaddle
+deaf deed deeds added adds faded eased sealed leased seeded saddle saddled ladle ladles dale dell dells sleds fads
+jaded jades jells jelled false flee flees falls leads feeds fees safes sales eases lass lasses sass salsa alfalfa
+leafless seedless selfless
+dive dial did die dies fiddle field file files fill fills fin find fire firs
 fish fled flies fries idle ill isle kiss kid kids lid lids life like likes lift lie lies line lies ride rides
 rise risk said sail sir sister ski skies slid side sides silk sink sit fir fear dear deer ear ears
 feed free freed jar jars red reds real read reader rake raid rail rid ride rider fries sir stir tear tree trees
