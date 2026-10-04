@@ -9,7 +9,7 @@ export interface StarRules {
   targetAccuracy: number
 }
 
-/** 6 is the hidden rainbow star: never announced, only earned by an outstanding round. */
+/** 6 is the hidden rainbow star: never announced, only earned by a very accurate round. */
 export type Stars = 1 | 2 | 3 | 4 | 5 | 6
 
 /** One number for a round: speed discounted by mistakes (a "net speed"). */
@@ -18,20 +18,33 @@ export const roundScore = (s: Pick<Session, 'wpm' | 'accuracy'>) => s.wpm * s.ac
 /** Net speed needed for 2 / 3 / 4 / 5 stars, as a share of the target (target speed × target accuracy). */
 export const STAR_CUTS = [0.3, 0.5, 0.75, 1] as const
 
-/** The hidden sixth star: net speed at 150% of the target, with 98%+ accuracy. */
-export const RAINBOW_CUT = 1.5
+/** The hidden sixth star: a five-star round with 98%+ accuracy. */
 export const RAINBOW_ACCURACY = 0.98
+
+/**
+ * Rounds started before this were rated by net speed alone, with the rainbow star for 150% of
+ * the target at 98%+ accuracy. They keep those stars, so nobody's level or badges change.
+ */
+export const ACCURACY_RULES_FROM = Date.UTC(2026, 9, 4, 15)
+const OLD_RAINBOW_CUT = 1.5
 
 /**
  * Stars for a round from its speed and accuracy alone: the net speed (speed × accuracy, so
  * mistakes count against it) as a share of the target. Generous on purpose: 30% of the target
- * is already 2 stars, 50% is 3, 75% is 4, and reaching the target is 5. Beating it by half at 98%+ accuracy is a secret sixth (rainbow) star.
+ * is already 2 stars, 50% is 3 and 75% is 4. The fifth star also needs the target accuracy,
+ * and 98%+ accuracy on top of that is a secret sixth (rainbow) star: typing faster than the
+ * target earns nothing extra, typing more carefully does.
  */
-export function starsFor(s: Pick<Session, 'wpm' | 'accuracy'>, r: StarRules): Stars {
+export function starsFor(s: Pick<Session, 'wpm' | 'accuracy' | 'startedAt'>, r: StarRules): Stars {
   const target = r.targetWpm * r.targetAccuracy
   const score = roundScore(s)
-  if (score >= RAINBOW_CUT * target && s.accuracy >= RAINBOW_ACCURACY) return 6
-  return (1 + STAR_CUTS.filter((c) => score >= c * target).length) as Stars
+  const bySpeed = (1 + STAR_CUTS.filter((c) => score >= c * target).length) as Stars
+  if (s.startedAt < ACCURACY_RULES_FROM) {
+    return score >= OLD_RAINBOW_CUT * target && s.accuracy >= RAINBOW_ACCURACY ? 6 : bySpeed
+  }
+  if (bySpeed < 5) return bySpeed
+  if (s.accuracy >= RAINBOW_ACCURACY) return 6
+  return s.accuracy >= r.targetAccuracy ? 5 : 4
 }
 
 /** Rounds in the order they were played (ties by id, so every device agrees). */

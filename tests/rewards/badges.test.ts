@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { UNITS } from '../../src/lessons/curriculum'
 import { BADGES, computeBadges, newBadges } from '../../src/rewards/badges'
+import { ACCURACY_RULES_FROM } from '../../src/rewards/rewards'
 import { dayAt, makeSession } from '../helpers/session'
 
 const R = { targetWpm: 25, targetAccuracy: 0.95, dailyGoalRounds: 3 }
@@ -77,6 +78,9 @@ describe('earning', () => {
     expect(get(computeBadges(list(30), R), 'stars-rainbow').earnedAt).toBeNull()
     expect(get(computeBadges(list(40), R), 'stars-rainbow').earnedAt).not.toBeNull()
     expect(get(computeBadges(list(40), R), 'stars-rainbow').badge.hidden).toBe(true)
+    // Since the accuracy rules, a clean round at the target speed is enough.
+    const clean = [makeSession({ wpm: 25, accuracy: 0.98, startedAt: ACCURACY_RULES_FROM })]
+    expect(get(computeBadges(clean, R), 'stars-rainbow').earnedAt).not.toBeNull()
   })
 
   it('a badge for every level reached', () => {

@@ -5,6 +5,7 @@ import {
   SHIFT_SLACK,
   UNITS,
   computeProgress,
+  hasSlipped,
   meetsTarget,
   targetMs,
   unitChars,
@@ -96,6 +97,55 @@ describe('computeProgress', () => {
     expect(p.unlockedUnits).toBe(1)
     expect(p.focus).toBe('f')
     expect(p.weak).toEqual(['f'])
+  })
+
+  describe('keys pass one by one and keep it', () => {
+    const [first, ...others] = UNITS[0].chars
+    /** A round where only `chars` were typed, at `ms` per hit with `miss` of 20 tries wrong. */
+    const only = (startedAt: number, chars: string[], ms: number, miss = 0): SessionLike => ({
+      startedAt,
+      keyStats: statsFor(chars, ms, 20 - miss, miss),
+      units: 1,
+    })
+
+    it('unlocks when every key has passed, even in different rounds', () => {
+      const list = [only(1, [first], FAST), only(2, others, FAST)]
+      expect(computeProgress(list.slice(0, 1), S).unlockedUnits).toBe(1)
+      expect(computeProgress(list, S).unlockedUnits).toBe(2)
+    })
+
+    it('a passed key that dips a little is still passed', () => {
+      // 93% is under the 95% target but well above the slip line (90%).
+      const p = computeProgress([only(1, [first], FAST), only(2, [first], FAST, 2)], S)
+      expect(p.keys[first].acc).toBeLessThan(S.targetAccuracy)
+      expect(meetsTarget(first, p.keys[first], S)).toBe(false)
+      expect(p.passed.has(first)).toBe(true)
+      expect(p.weak).not.toContain(first)
+      expect(computeProgress([only(1, [first], FAST), only(2, [first], FAST, 2), only(3, others, FAST)], S).unlockedUnits).toBe(2)
+    })
+
+    it('a passed key that clearly slips has to pass again', () => {
+      const sloppy = computeProgress([only(1, [first], FAST), only(2, [first], FAST, 10), only(3, others, FAST)], S)
+      expect(hasSlipped(first, sloppy.keys[first], S)).toBe(true)
+      expect(sloppy.passed.has(first)).toBe(false)
+      expect(sloppy.unlockedUnits).toBe(1)
+      expect(sloppy.weak).toEqual([first])
+
+      const slow = computeProgress([only(1, [first], FAST), only(2, [first], SLOW), only(3, [first], SLOW)], S)
+      expect(slow.passed.has(first)).toBe(false)
+    })
+
+    it('a key that never reached the target has not passed', () => {
+      const p = computeProgress([only(1, [first], FAST, 2), only(2, others, FAST)], S)
+      expect(p.passed.has(first)).toBe(false)
+      expect(p.unlockedUnits).toBe(1)
+    })
+
+    it('newly unlocked keys start out not passed', () => {
+      const p = computeProgress([only(1, UNITS[0].chars, FAST)], S)
+      expect(p.unlockedUnits).toBe(2)
+      expect(p.weak).toEqual(UNITS[1].chars)
+    })
   })
 
   it('does not unlock when accuracy is too low', () => {

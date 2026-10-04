@@ -63,9 +63,11 @@ export interface Progress {
   unlocked: Set<string>
   stage: Stage
   keys: Record<string, KeyPerf>
+  /** Keys that have reached the target and not clearly slipped since. */
+  passed: Set<string>
   /** The weakest unlocked key; the next lesson emphasizes it. */
   focus: string | null
-  /** Unlocked keys that still miss the target, most needed first. */
+  /** Unlocked keys that haven't passed, most needed first. */
   weak: string[]
   done: boolean
 }
@@ -99,6 +101,18 @@ export function meetsTarget(ch: string, p: KeyPerf | undefined, s: UnlockSetting
   return p.ms <= targetMs(ch, s) && p.acc >= s.targetAccuracy
 }
 
+/**
+ * A key that has passed stays passed through the ordinary ups and downs of its average; it is
+ * only taken back when it clearly slips: accuracy this far under the target, or this much slower.
+ */
+export const SLIP_ACCURACY = 0.05
+export const SLIP_SPEED = 1.15
+
+export function hasSlipped(ch: string, p: KeyPerf | undefined, s: UnlockSettings): boolean {
+  if (!p || p.ms === null || p.acc === null) return false
+  return p.acc < s.targetAccuracy - SLIP_ACCURACY || p.ms > targetMs(ch, s) * SLIP_SPEED
+}
+
 function updatePerf(keys: Record<string, KeyPerf>, stats: KeyStats) {
   for (const [ch, st] of Object.entries(stats)) {
     const cur = keys[ch] ?? { samples: 0, ms: null, acc: null }
@@ -121,44 +135,51 @@ function updatePerf(keys: Record<string, KeyPerf>, stats: KeyStats) {
 const clampUnits = (n: number) => (Number.isFinite(n) ? Math.min(UNITS.length, Math.max(1, Math.round(n))) : 1)
 
 /**
- * Replay sessions in time order, unlocking the next unit whenever every unlocked key meets
- * the target. Unlocks only ever move forward: each round records how far it was, so raising
- * the target later never takes keys away.
+ * Replay sessions in time order. A key passes when it meets the target and keeps that until it
+ * clearly slips; the next unit unlocks once every unlocked key has passed. (Asking all keys to
+ * be on target in the same round is far stricter than the target itself, because the averages
+ * wobble from round to round.) Unlocks only ever move forward: each round records how far it
+ * was, so raising the target later never takes keys away.
  */
 export function computeProgress(sessions: SessionLike[], s: UnlockSettings): Progress {
   const sorted = [...sessions].sort((a, b) => a.startedAt - b.startedAt)
   // `manual`: include the unit counts recorded during a manual jump; otherwise practice only.
   const replay = (start: number, manual: boolean) => {
     const keys: Record<string, KeyPerf> = {}
+    const passed = new Set<string>()
     let units = start
     for (const session of sorted) {
       const floor = manual ? session.units : (session.earnedUnits ?? session.units)
       units = Math.max(units, clampUnits(floor ?? 1))
       updatePerf(keys, session.keyStats)
-      while (units < UNITS.length && [...unitChars(units)].every((c) => meetsTarget(c, keys[c], s))) {
+      for (const c of Object.keys(session.keyStats)) {
+        if (meetsTarget(c, keys[c], s)) passed.add(c)
+        else if (hasSlipped(c, keys[c], s)) passed.delete(c)
+      }
+      while (units < UNITS.length && [...unitChars(units)].every((c) => passed.has(c))) {
         units++
       }
     }
-    return { keys, units }
+    return { keys, passed, units }
   }
 
   const auto = replay(1, false)
-  const { keys, units: unlockedUnits } =
+  const { keys, passed, units: unlockedUnits } =
     s.manualUnits !== null && s.manualUnits > auto.units ? replay(clampUnits(s.manualUnits), true) : auto
   const unlocked = unitChars(unlockedUnits)
   const stage = UNITS[unlockedUnits - 1].stage
 
-  // Unlocking the next unit needs *every* unlocked key on target, so look at all of them,
+  // Unlocking the next unit needs *every* unlocked key to have passed, so look at all of them,
   // not just the current stage: a lowercase key that slipped should get practice too.
   const all = UNITS.slice(0, unlockedUnits).flatMap((u) => u.chars)
   // Weakest first; on a tie the most recently unlocked key wins.
   const weak = all
     .map((c, i) => ({ c, i }))
-    .filter(({ c }) => !meetsTarget(c, keys[c], s))
+    .filter(({ c }) => !passed.has(c))
     .sort((a, b) => weakness(b.c, keys[b.c], s) - weakness(a.c, keys[a.c], s) || b.i - a.i)
     .map(({ c }) => c)
 
-  // Even when every key is on target, keep polishing the slowest one.
+  // Even when every key has passed, keep polishing the slowest one.
   const focus = weak[0] ?? slowest(all, keys, s)
   return {
     unlockedUnits,
@@ -166,6 +187,7 @@ export function computeProgress(sessions: SessionLike[], s: UnlockSettings): Pro
     unlocked,
     stage,
     keys,
+    passed,
     focus,
     weak,
     done: unlockedUnits === UNITS.length && weak.length === 0,

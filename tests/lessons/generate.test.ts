@@ -59,6 +59,32 @@ describe('generateLesson — every unit, many focus keys and seeds', () => {
     }
   })
 
+  describe('the next-weakest keys', () => {
+    const count = (lessons: string[], ch: string) => lessons.join(' ').split(ch).length - 1
+    const lessons = (p: Progress) => Array.from({ length: 20 }, (_, i) => generateLesson(p, 20, seeded(i + 1)))
+    const base = progressAt(1, 'd')
+
+    it('get words of their own, so even a rare letter is practiced every round', () => {
+      const one = lessons({ ...base, weak: ['d'] })
+      const three = lessons({ ...base, weak: ['d', 'k', 'j'] })
+      // j is in two real words at this point: alone it turns up about once a round.
+      expect(count(three, 'j')).toBeGreaterThanOrEqual(count(one, 'j') * 2)
+      expect(count(three, 'k')).toBeGreaterThan(count(one, 'k'))
+      for (const lesson of three) {
+        expect(lesson).toContain('j')
+        expect(lesson).toContain('k')
+      }
+      // The focus key still gets the most.
+      for (const ch of 'kj') expect(count(three, 'd')).toBeGreaterThan(count(three, ch))
+    })
+
+    it('only two of them, and only lowercase letters', () => {
+      const p = { ...base, weak: ['d', 'k', 'j', 'f'] }
+      expect(lessons(p)).toEqual(lessons({ ...p, weak: ['d', 'k', 'j'] }))
+      expect(lessons({ ...base, weak: ['d', 'K', '?'] })).toEqual(lessons({ ...base, weak: ['d'] }))
+    })
+  })
+
   it('a capital focus key appears in capitals-stage lessons', () => {
     const units = UNITS.findIndex((u) => u.chars.includes('M')) + 1
     let hits = 0

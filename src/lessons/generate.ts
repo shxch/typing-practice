@@ -1,5 +1,5 @@
 // Builds lesson text from real words — half Wings of Fire vocabulary, half general words —
-// using only unlocked keys, leaning on the focus key, and never repeating a word in a lesson.
+// using only unlocked keys, leaning on the weakest keys, and never repeating a word in a lesson.
 
 import { CONTRACTIONS, HYPHENATED, PROPER_NOUNS, WORDS } from '../content/words'
 import { WOF_HYPHENATED, WOF_NAMES, WOF_SENTENCES, WOF_WORDS } from '../content/wof'
@@ -9,8 +9,15 @@ export type Rng = () => number
 
 /** Share of each lesson taken from Wings of Fire words; the rest are general words. */
 const WOF_SHARE = 0.5
-/** Below this many real words for the focus key, mix in drill syllables. */
+/** Below this many real words for a key, mix in drill syllables. */
 const MIN_FOCUS_WORDS = 12
+/**
+ * Besides the focus key, this many of the next-weakest keys get their own words in a lesson,
+ * each this share of it. A key that only turns up by chance (j, early on) barely moves its
+ * average, so it would stay weak long after the focus key has passed.
+ */
+const EXTRA_WEAK_KEYS = 2
+const EXTRA_WEAK_SHARE = 0.15
 
 interface Cand {
   word: string
@@ -120,22 +127,31 @@ export function drillSyllables(focus: string, unlocked: Set<string>): string[] {
   return [...out]
 }
 
-/** `count` unique lowercase words; about half contain the focus letter if it's lowercase. */
+/** Words that exercise a key, padded with drill syllables when few real words can. */
+function candsWith(key: string, cands: Cand[], unlocked: Set<string>): { list: Cand[]; drilled: boolean } {
+  const list = cands.filter((c) => c.word.includes(key))
+  if (list.length >= MIN_FOCUS_WORDS) return { list, drilled: false }
+  return { list: [...list, ...drillSyllables(key, unlocked).map((word) => ({ word, wof: false }))], drilled: true }
+}
+
+/**
+ * `count` unique lowercase words. If the focus is a lowercase letter, about half exercise the
+ * weakest keys: mostly the focus, with a smaller share for each of the next-weakest letters.
+ */
 function lowercaseWords(p: Progress, count: number, pk: Picker): string[] {
   if (count <= 0) return []
   const cands = lowercaseCands(p.unlocked)
   const focus = p.focus
   if (!isLower(focus)) return pk.take(cands, count)
 
-  let focused = cands.filter((c) => c.word.includes(focus))
-  let share = 0.5
-  if (focused.length < MIN_FOCUS_WORDS) {
-    focused = [...focused, ...drillSyllables(focus, p.unlocked).map((word) => ({ word, wof: false }))]
-    share = 0.65
-  }
-  const withFocus = pk.take(focused, Math.round(count * share))
-  const rest = pk.take(cands, count - withFocus.length)
-  return pk.shuffle([...withFocus, ...rest])
+  const extra = p.weak.filter((c) => c !== focus && isLower(c)).slice(0, EXTRA_WEAK_KEYS)
+  const focused = candsWith(focus, cands, p.unlocked)
+  // The extra keys take their share half from the focus and half from the free words.
+  const share = (focused.drilled ? 0.65 : 0.5) - (extra.length * EXTRA_WEAK_SHARE) / 2
+  const out = pk.take(focused.list, Math.round(count * share))
+  for (const key of extra) out.push(...pk.take(candsWith(key, cands, p.unlocked).list, Math.round(count * EXTRA_WEAK_SHARE)))
+  out.push(...pk.take(cands, count - out.length))
+  return pk.shuffle(out)
 }
 
 /** Capitalized words and names, for the capitals stage and beyond. */

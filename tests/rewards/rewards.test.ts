@@ -1,33 +1,50 @@
 import { describe, expect, it } from 'vitest'
-import { LEVEL_STARS, levelOf, roundsOn, starsByRound, starsFor, streak, totalStars } from '../../src/rewards/rewards'
+import { ACCURACY_RULES_FROM, LEVEL_STARS, levelOf, roundsOn, starsByRound, starsFor, streak, totalStars } from '../../src/rewards/rewards'
 import { dayAt, makeSession } from '../helpers/session'
 
 const R = { targetWpm: 25, targetAccuracy: 0.95 }
 
 describe('stars', () => {
+  const stars = (wpm: number, accuracy: number, r = R) => starsFor({ wpm, accuracy, startedAt: ACCURACY_RULES_FROM }, r)
+  const oldStars = (wpm: number, accuracy: number) => starsFor({ wpm, accuracy, startedAt: ACCURACY_RULES_FROM - 1 }, R)
+
   // Target net speed: 25 × 95% = 23.75; cuts at 30% / 50% / 75% / 100% = 7.1, 11.9, 17.8, 23.75
-  it('depends only on speed and accuracy, against the target', () => {
-    expect(starsFor({ wpm: 7, accuracy: 1 }, R)).toBe(1)
-    expect(starsFor({ wpm: 8, accuracy: 1 }, R)).toBe(2)
-    expect(starsFor({ wpm: 12, accuracy: 1 }, R)).toBe(3)
-    expect(starsFor({ wpm: 18, accuracy: 1 }, R)).toBe(4)
-    expect(starsFor({ wpm: 24, accuracy: 1 }, R)).toBe(5)
+  it('up to four stars depend only on net speed, against the target', () => {
+    expect(stars(7, 0.96)).toBe(1)
+    expect(stars(8, 0.96)).toBe(2)
+    expect(stars(13, 0.96)).toBe(3)
+    expect(stars(19, 0.96)).toBe(4)
+    expect(stars(25, 0.96)).toBe(5)
   })
 
   it('mistakes lower the score', () => {
-    expect(starsFor({ wpm: 25, accuracy: 0.95 }, R)).toBe(5) // 23.75
-    expect(starsFor({ wpm: 25, accuracy: 0.8 }, R)).toBe(4) // 20
-    expect(starsFor({ wpm: 25, accuracy: 0.4 }, R)).toBe(2) // 10
+    expect(stars(25, 0.95)).toBe(5) // 23.75
+    expect(stars(25, 0.8)).toBe(4) // 20
+    expect(stars(25, 0.4)).toBe(2) // 10
   })
 
-  it('a hidden sixth star needs 150% of the target and 98%+ accuracy', () => {
-    expect(starsFor({ wpm: 36, accuracy: 1 }, R)).toBe(6) // 36 ≥ 35.6
-    expect(starsFor({ wpm: 36, accuracy: 0.97 }, R)).toBe(5) // fast, but not clean enough
-    expect(starsFor({ wpm: 35, accuracy: 1 }, R)).toBe(5)
+  it('the fifth star needs the target accuracy, however fast the round', () => {
+    expect(stars(40, 0.94)).toBe(4)
+    expect(stars(40, 0.95)).toBe(5)
+    expect(stars(60, 0.8)).toBe(4)
+  })
+
+  it('a hidden sixth star needs 98%+ accuracy at the target speed, not more speed', () => {
+    expect(stars(25, 0.98)).toBe(6) // 24.5 ≥ 23.75
+    expect(stars(25, 1)).toBe(6)
+    expect(stars(50, 0.97)).toBe(5) // fast, but not clean enough
+    expect(stars(20, 1)).toBe(4) // clean, but under the target speed
+  })
+
+  it('rounds from before the accuracy rules keep the stars they were given', () => {
+    expect(oldStars(40, 0.8)).toBe(5) // 32 net: five stars despite the mistakes
+    expect(oldStars(36, 1)).toBe(6) // 36 ≥ 35.6, 150% of the target
+    expect(oldStars(36, 0.97)).toBe(5)
+    expect(oldStars(25, 1)).toBe(5) // the rainbow star needed speed back then
   })
 
   it('a higher target makes the same round worth fewer stars', () => {
-    expect(starsFor({ wpm: 24, accuracy: 1 }, { targetWpm: 40, targetAccuracy: 0.95 })).toBe(3)
+    expect(stars(24, 1, { targetWpm: 40, targetAccuracy: 0.95 })).toBe(3)
   })
 
   it('rounds are rated one by one, whatever else was played', () => {
