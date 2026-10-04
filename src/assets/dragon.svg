@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="fire" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fbbf24"/>
+      <stop offset="0.55" stop-color="#f97316"/>
+      <stop offset="1" stop-color="#dc2626"/>
+    </linearGradient>
+  </defs>
+  <!-- wings -->
+  <g fill="url(#fire)" stroke="#7c2d12" stroke-width="2" stroke-linejoin="round">
+    <path d="M27 34 L3 7 Q9 20 3 30 Q11 28 13 39 Q19 35 23 45 Z"/>
+    <path d="M37 34 L61 7 Q55 20 61 30 Q53 28 51 39 Q45 35 41 45 Z"/>
+  </g>
+  <!-- wing ribs -->
+  <path d="M27 34 L3 30 M27 34 L13 39 M37 34 L61 30 M37 34 L51 39" fill="none" stroke="#7c2d12" stroke-width="1.2" stroke-linecap="round"/>
+  <!-- body -->
+  <path d="M32 61 Q21 53 24 39 L40 39 Q43 53 32 61 Z" fill="#b91c1c" stroke="#7c2d12" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M32 57 Q26 51 28 42 L36 42 Q38 51 32 57 Z" fill="#fde68a"/>
+  <!-- horns -->
+  <g fill="#fde68a" stroke="#7c2d12" stroke-width="1.6" stroke-linejoin="round">
+    <path d="M23 21 L18 5 L30 15 Z"/>
+    <path d="M41 21 L46 5 L34 15 Z"/>
+  </g>
+  <!-- head -->
+  <path d="M32 12 Q44 14 45 26 Q44 36 37 42 Q32 45 27 42 Q20 36 19 26 Q20 14 32 12 Z" fill="#dc2626" stroke="#7c2d12" stroke-width="2" stroke-linejoin="round"/>
+  <!-- eyes -->
+  <path d="M22.5 24.5 L30 28 L24 30.5 Z M41.5 24.5 L34 28 L40 30.5 Z" fill="#fde047" stroke="#7c2d12" stroke-width="0.8" stroke-linejoin="round"/>
+  <path d="M25.6 26.2 L26.4 29.3 M38.4 26.2 L37.6 29.3" stroke="#1f2937" stroke-width="1.3" stroke-linecap="round"/>
+  <!-- nostrils -->
+  <circle cx="29.6" cy="38" r="1.1" fill="#7c2d12"/>
+  <circle cx="34.4" cy="38" r="1.1" fill="#7c2d12"/>
+</svg>
