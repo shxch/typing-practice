@@ -1,5 +1,5 @@
 import { useMemo, type ReactNode } from 'react'
-import { msToWpm } from '../engine/typing'
+import { msToWpm, shownPercent, shownWpm } from '../engine/typing'
 import { useT } from '../i18n'
 import { UNITS, meetsTarget, targetMs, type Progress, type Stage, type UnlockSettings } from '../lessons/curriculum'
 import { byTime, keySpeedSeries, keySummary } from '../lessons/stats'
@@ -66,7 +66,7 @@ export function KeyPanel({ progress, sessions, settings, selected, onSelect, hea
                       title={
                         open
                           ? perf?.ms
-                            ? t.keyTooltip(ch, Math.round(msToWpm(perf.ms)), Math.round((perf.acc ?? 0) * 100))
+                            ? t.keyTooltip(ch, shownWpm(msToWpm(perf.ms)), shownPercent(perf.acc ?? 0))
                             : `${ch}: ${t.notPracticed}`
                           : t.locked
                       }
@@ -105,7 +105,7 @@ export function KeyPanel({ progress, sessions, settings, selected, onSelect, hea
               <span className="font-mono text-2xl font-bold text-slate-800 w-6">{key === ' ' ? '␣' : key}</span>
               <Stat label={t.recentSpeed} value={`${fmt(summary.recent)} WPM`} />
               <Stat label={t.bestSpeed} value={`${fmt(summary.best)} WPM`} />
-              <Stat label={t.accuracy} value={summary.accuracy === null ? '–' : `${Math.round(summary.accuracy * 100)}%`} />
+              <Stat label={t.accuracy} value={summary.accuracy === null ? '–' : `${shownPercent(summary.accuracy)}%`} />
               <Stat label={t.hits} value={String(summary.hits)} />
             </div>
             <div className="text-xs text-slate-500 mt-1">{t.keySpeedChart(key)}</div>

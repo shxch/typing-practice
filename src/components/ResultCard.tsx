@@ -1,4 +1,4 @@
-import { msToWpm } from '../engine/typing'
+import { msToWpm, shownPercent, shownWpm } from '../engine/typing'
 import { useT } from '../i18n'
 import type { Badge } from '../rewards/badges'
 import { BadgeIcon } from './BadgeIcon'
@@ -111,11 +111,11 @@ export function ResultCard({ result, onNext }: { result: RoundResult; onNext: ()
       )}
       <div className="flex justify-center gap-12">
         <div>
-          <div className="text-5xl font-bold text-theme-600">{Math.round(result.wpm)}</div>
+          <div className="text-5xl font-bold text-theme-600">{shownWpm(result.wpm)}</div>
           <div className="text-slate-500 mt-1">{t.speed}</div>
         </div>
         <div>
-          <div className="text-5xl font-bold text-emerald-600">{Math.round(result.accuracy * 100)}%</div>
+          <div className="text-5xl font-bold text-emerald-600">{shownPercent(result.accuracy)}%</div>
           <div className="text-slate-500 mt-1">{t.accuracy}</div>
         </div>
       </div>
@@ -124,7 +124,7 @@ export function ResultCard({ result, onNext }: { result: RoundResult; onNext: ()
           {t.slowestKeys}
           {result.slowest.map((k) => (
             <span key={k.ch} className="inline-block mx-1.5 px-2.5 py-1 rounded-md bg-amber-50 border border-amber-200 font-mono">
-              {show(k.ch)} <span className="text-xs text-amber-700">{Math.round(msToWpm(k.ms))} WPM</span>
+              {show(k.ch)} <span className="text-xs text-amber-700">{shownWpm(msToWpm(k.ms))} WPM</span>
             </span>
           ))}
         </div>

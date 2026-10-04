@@ -215,3 +215,10 @@ export function slowestKeys(stats: KeyStats, count = 3): { ch: string; ms: numbe
 
 export const msToWpm = (ms: number) => 60000 / ms / 5
 export const wpmToMs = (w: number) => 60000 / (w * 5)
+
+/**
+ * Numbers as shown on screen: always rounded down, so a displayed 98% or 25 WPM has really
+ * been reached (97.9% must not read as 98%). The epsilon keeps 0.57 * 100 from showing as 56.
+ */
+export const shownPercent = (share: number) => Math.floor(share * 100 + 1e-9)
+export const shownWpm = (w: number) => Math.floor(w + 1e-9)

@@ -96,7 +96,8 @@ describe('ResultCard', () => {
         onNext={onNext}
       />,
     )
-    expect(screen.getByText('24')).toBeTruthy()
+    // Shown numbers round down: 23.6 WPM is not 24 yet.
+    expect(screen.getByText('23')).toBeTruthy()
     expect(screen.getByText('97%')).toBeTruthy()
     expect(screen.getByText(BADGES[0].name.zh)).toBeTruthy()
     noBadText()

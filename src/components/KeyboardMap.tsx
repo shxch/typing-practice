@@ -1,4 +1,4 @@
-import { msToWpm } from '../engine/typing'
+import { msToWpm, shownPercent, shownWpm } from '../engine/typing'
 import { useT } from '../i18n'
 import type { Progress } from '../lessons/curriculum'
 
@@ -42,7 +42,7 @@ function tooltip(chars: string[], p: Progress, t: ReturnType<typeof useT>): stri
     .map((c) => {
       const k = p.keys[c]
       if (!k || k.ms === null) return `${c}: ${t.notPracticed}`
-      return t.keyTooltip(c, Math.round(msToWpm(k.ms)), Math.round((k.acc ?? 0) * 100))
+      return t.keyTooltip(c, shownWpm(msToWpm(k.ms)), shownPercent(k.acc ?? 0))
     })
     .join('\n')
 }
