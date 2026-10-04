@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import dragonLogo from './assets/dragon.svg'
+import dragonLogo from './assets/dragon.png'
 import { Background, useDecodedWallpaper, useWallpaperFit } from './components/Background'
 import { SyncBadge } from './components/SyncBadge'
 import { findWallpaper, useWallpapers } from './content/wallpapers'
