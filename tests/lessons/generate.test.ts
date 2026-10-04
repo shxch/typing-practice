@@ -29,7 +29,9 @@ describe('generateLesson — every unit, many focus keys and seeds', () => {
 
       expect(lesson.length, where).toBeGreaterThan(0)
       expect(lesson, where).not.toMatch(/^ | $|  /)
-      for (const ch of lesson) if (ch !== ' ') expect(p.unlocked.has(ch), `${where} uses locked "${ch}"`).toBe(true)
+      // One assertion per lesson, not per character: this loop runs over 100,000 characters.
+      const locked = [...lesson].filter((ch) => ch !== ' ' && !p.unlocked.has(ch))
+      expect(locked, `${where} uses locked keys`).toEqual([])
 
       const bases = words(lesson).map(baseOf).filter(Boolean)
       expect(new Set(bases).size, `${where} repeats a word`).toBe(bases.length)

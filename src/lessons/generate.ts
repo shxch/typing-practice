@@ -98,12 +98,18 @@ class Picker {
  * their capitals can't be typed yet — after that they appear properly capitalized instead.
  */
 function lowercaseCands(unlocked: Set<string>): Cand[] {
+  // A lesson asks for this list several times, and the unlocked keys rarely change.
+  const key = [...unlocked].join('')
+  if (lastCands?.key === key) return lastCands.cands
   const lowerNames = WOF_NAMES.filter((n) => !onlyUses(n, unlocked)).map((n) => n.toLowerCase())
   const wof = Array.from(new Set([...WOF_WORDS, ...lowerNames])).filter((w) => onlyUses(w, unlocked))
   const wofSet = new Set(wof)
   const general = WORDS.filter((w) => !wofSet.has(w) && onlyUses(w, unlocked))
-  return [...wof.map((word) => ({ word, wof: true })), ...general.map((word) => ({ word, wof: false }))]
+  const cands = [...wof.map((word) => ({ word, wof: true })), ...general.map((word) => ({ word, wof: false }))]
+  lastCands = { key, cands }
+  return cands
 }
+let lastCands: { key: string; cands: Cand[] } | null = null
 
 const VOWELS = 'aeiou'
 
