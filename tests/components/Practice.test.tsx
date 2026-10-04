@@ -144,8 +144,8 @@ describe('resuming', () => {
   })
 
   it('a round that completes the daily goal celebrates it', () => {
-    useApp.getState().updateSettings({ dailyGoalMinutes: 1 })
-    const st = { ...typeChar(createState('fj', 'stop'), 'f', Date.now() - 100), elapsedMs: 70_000 }
+    useApp.getState().updateSettings({ dailyGoalRounds: 1 })
+    const st = typeChar(createState('fj', 'stop'), 'f', Date.now() - 100)
     useApp.getState().setInProgress(lesson('fj', { state: st }))
     render(<Practice />)
     typeAll('j')

@@ -39,7 +39,8 @@ export interface SyncedSettings {
   lang: Lang
   /** Wallpaper id (see content/wallpapers.ts). */
   wallpaper: string
-  dailyGoalMinutes: number
+  /** Rounds to finish in a day for it to count toward the streak. */
+  dailyGoalRounds: number
   /** Wallpapers added in the app; the images themselves live in the data repo. */
   customWallpapers: CustomWallpaper[]
   /** Built-in wallpapers the user removed from the picker. */
@@ -63,7 +64,7 @@ export const DEFAULT_SETTINGS: SyncedSettings = {
   errorMode: 'stop',
   lang: 'zh',
   wallpaper: 'gradient-lavender',
-  dailyGoalMinutes: 15,
+  dailyGoalRounds: 15,
   customWallpapers: [],
   hiddenWallpapers: [],
 }

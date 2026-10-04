@@ -1,20 +1,18 @@
 import { useT } from '../i18n'
 import { dayKey } from '../lessons/stats'
-import { levelOf, minutesOn, streak, totalStars } from '../rewards/rewards'
+import { levelOf, roundsOn, streak, totalStars } from '../rewards/rewards'
 import type { Session, SyncedSettings } from '../store/types'
 
 interface Props {
   sessions: Session[]
   settings: SyncedSettings
-  /** Time spent in the round being typed right now, so the bar moves while typing. */
-  liveMs: number
 }
 
 /** Today's goal, streak and level — the reasons to come back tomorrow. */
-export function DailyBar({ sessions, settings, liveMs }: Props) {
+export function DailyBar({ sessions, settings }: Props) {
   const t = useT()
-  const goal = settings.dailyGoalMinutes
-  const today = minutesOn(sessions, dayKey(Date.now())) + liveMs / 60000
+  const goal = settings.dailyGoalRounds
+  const today = roundsOn(sessions, dayKey(Date.now()))
   const done = today >= goal
   const days = streak(sessions, goal)
   const stars = totalStars(sessions, settings)
@@ -28,10 +26,10 @@ export function DailyBar({ sessions, settings, liveMs }: Props) {
         <div className="flex items-baseline justify-between gap-3">
           <span className="font-semibold text-slate-800">{t.todayGoal}</span>
           <span className="text-sm text-slate-600">
-            {t.minutesProgress(Math.floor(today), goal)}
+            {t.roundsProgress(today, goal)}
             <span className="mx-1.5 text-slate-300">·</span>
             <span className={done ? 'text-emerald-600 font-semibold' : ''}>
-              {done ? t.goalDone : t.goalLeft(Math.max(1, Math.ceil(goal - today)))}
+              {done ? t.goalDone : t.goalLeft(goal - today)}
             </span>
           </span>
         </div>

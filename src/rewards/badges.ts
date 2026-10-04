@@ -7,7 +7,7 @@ import type { Session } from '../store/types'
 import { inPlayOrder, levelOf, starsByRound, type StarRules } from './rewards'
 
 export interface BadgeRules extends StarRules {
-  dailyGoalMinutes: number
+  dailyGoalRounds: number
 }
 
 /** Running totals while replaying the sessions. */
@@ -211,8 +211,8 @@ export function computeBadges(sessions: Session[], r: BadgeRules, currentUnits =
     c.devices = devices.size
 
     const day = dayKey(s.startedAt)
-    perDay.set(day, (perDay.get(day) ?? 0) + s.durationMs / 60000)
-    if (!goalMet.has(day) && perDay.get(day)! >= r.dailyGoalMinutes) {
+    perDay.set(day, (perDay.get(day) ?? 0) + 1)
+    if (!goalMet.has(day) && perDay.get(day)! >= r.dailyGoalRounds) {
       goalMet.add(day)
       c.goalDays = goalMet.size
       // Streak of goal days ending today.

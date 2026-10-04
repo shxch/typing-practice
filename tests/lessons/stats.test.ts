@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { byTime, dailyTime, dayKey, keySpeedSeries, keySummary, lastWithDelta, sessionsOnDay, totals } from '../../src/lessons/stats'
+import { byTime, dailyRounds, dayKey, keySpeedSeries, keySummary, lastWithDelta, sessionsOnDay, totals } from '../../src/lessons/stats'
 import { dayAt, makeSession } from '../helpers/session'
 
 const k = (n: number, t: number, ms: number, miss = 0) => ({ n, miss, t, ms })
@@ -60,13 +60,13 @@ describe('days', () => {
     expect(dayKey(dayAt(2026, 1, 5))).toBe('2026-01-05')
   })
 
-  it('groups practice time per day', () => {
+  it('counts rounds per day', () => {
     const list = [
       makeSession({ startedAt: dayAt(2026, 9, 1, 9), durationMs: 60_000 }),
       makeSession({ startedAt: dayAt(2026, 9, 1, 21), durationMs: 30_000 }),
       makeSession({ startedAt: dayAt(2026, 9, 2, 9), durationMs: 10_000 }),
     ]
-    expect(Object.fromEntries(dailyTime(list))).toEqual({ '2026-09-01': 90_000, '2026-09-02': 10_000 })
+    expect(Object.fromEntries(dailyRounds(list))).toEqual({ '2026-09-01': 2, '2026-09-02': 1 })
     expect(sessionsOnDay(list, '2026-09-01')).toHaveLength(2)
   })
 })

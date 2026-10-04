@@ -66,7 +66,7 @@ describe('persistence', () => {
     const st = useApp.getState()
     expect(st.shared.settings.targetWpm).toBe(40)
     expect(st.shared.settings.hiddenWallpapers).toEqual([])
-    expect(st.shared.settings.dailyGoalMinutes).toBe(DEFAULT_SETTINGS.dailyGoalMinutes)
+    expect(st.shared.settings.dailyGoalRounds).toBe(DEFAULT_SETTINGS.dailyGoalRounds)
     expect(st.config.soundStyle).toBe('phone') // v2 migration
     expect(st.config.showKeyboard).toBe(true)
     expect(st.remoteStamp).toEqual({ settings: 0, inProgress: 0 })

@@ -83,10 +83,10 @@ export function sessionsOnDay(sessions: Session[], day: string): Session[] {
   return sessions.filter((s) => dayKey(s.startedAt) === day)
 }
 
-/** Practice time per local day. */
-export function dailyTime(sessions: Session[]): Map<string, number> {
+/** Rounds played per local day. */
+export function dailyRounds(sessions: Session[]): Map<string, number> {
   const out = new Map<string, number>()
-  for (const s of sessions) out.set(dayKey(s.startedAt), (out.get(dayKey(s.startedAt)) ?? 0) + s.durationMs)
+  for (const s of sessions) out.set(dayKey(s.startedAt), (out.get(dayKey(s.startedAt)) ?? 0) + 1)
   return out
 }
 

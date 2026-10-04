@@ -4,13 +4,13 @@ import { KeyboardMap } from '../components/KeyboardMap'
 import { KeyPanel } from '../components/KeyPanel'
 import { ResultCard, type RoundResult } from '../components/ResultCard'
 import { TypingArea } from '../components/TypingArea'
-import { accuracy, backspace, createState, resume, slowestKeys, typeChar, wpm } from '../engine/typing'
+import { accuracy, backspace, createState, resume, shownPercent, shownWpm, slowestKeys, typeChar, wpm } from '../engine/typing'
 import { useT } from '../i18n'
 import { UNITS, computeProgress, type Progress } from '../lessons/curriculum'
 import { generateLesson } from '../lessons/generate'
 import { dayKey } from '../lessons/stats'
 import { computeBadges, newBadges } from '../rewards/badges'
-import { levelOf, minutesOn, starsByRound, streak, totalStars } from '../rewards/rewards'
+import { levelOf, roundsOn, starsByRound, streak, totalStars } from '../rewards/rewards'
 import { playCorrect, playDelete, playError, playFinish, playUnlock } from '../sound/sound'
 import { useApp } from '../store/app'
 import type { InProgress, Session } from '../store/types'
@@ -105,10 +105,10 @@ export function Practice() {
       }
       const after = [...sessionList, session]
       const today = dayKey(now)
-      const goal = settings.dailyGoalMinutes
+      const goal = settings.dailyGoalRounds
       const levelBefore = levelOf(totalStars(sessionList, settings)).level
       const levelAfter = levelOf(totalStars(after, settings)).level
-      const goalJustDone = minutesOn(sessionList, today) < goal && minutesOn(after, today) >= goal
+      const goalJustDone = roundsOn(sessionList, today) < goal && roundsOn(after, today) >= goal
       const afterProgress = computeProgress(after, settings)
       const newKeys = [...afterProgress.unlocked].filter((c) => !progress.unlocked.has(c))
       const badges = newBadges(
@@ -225,7 +225,7 @@ export function Practice() {
   return (
     <div className="space-y-4">
       <div className={`${panel} px-5 py-4`}>
-        <DailyBar sessions={sessionList} settings={settings} liveMs={inProgress ? st.elapsedMs : 0} />
+        <DailyBar sessions={sessionList} settings={settings} />
       </div>
 
       {showKeyStats && (
@@ -269,8 +269,8 @@ export function Practice() {
       ) : (
         <div className={`${panel} ${showKeyboard ? 'px-10 py-7' : 'px-12 py-10'}`}>
           <div className="flex justify-end gap-5 font-mono text-sm text-slate-500 -mt-2 mb-2">
-            <span>{Math.round(wpm(st))} WPM</span>
-            <span>{Math.round(accuracy(st) * 100)}%</span>
+            <span>{shownWpm(wpm(st))} WPM</span>
+            <span>{shownPercent(accuracy(st))}%</span>
             <span>
               {st.pos}/{st.text.length}
             </span>

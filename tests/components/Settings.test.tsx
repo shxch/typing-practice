@@ -55,7 +55,7 @@ describe('number fields', () => {
     typeInto(goal, '30')
     expect(useApp.getState().shared.settingsUpdatedAt).toBe(stamp)
     fireEvent.blur(goal)
-    expect(settings().dailyGoalMinutes).toBe(30)
+    expect(settings().dailyGoalRounds).toBe(30)
   })
 
   it('accuracy is shown in percent and stored as a fraction', () => {

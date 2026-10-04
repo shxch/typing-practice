@@ -62,18 +62,18 @@ export function levelOf(stars: number): { level: number; current: number; next: 
   return { level, current: LEVEL_STARS[level], next: LEVEL_STARS[level + 1] ?? null }
 }
 
-export function minutesOn(sessions: Session[], day: string): number {
-  return sessions.filter((s) => dayKey(s.startedAt) === day).reduce((a, s) => a + s.durationMs, 0) / 60000
+export function roundsOn(sessions: Session[], day: string): number {
+  return sessions.filter((s) => dayKey(s.startedAt) === day).length
 }
 
 /**
  * Consecutive days that met the daily goal, ending today (or yesterday, if today's goal
  * isn't met yet — the streak isn't lost until the day is over).
  */
-export function streak(sessions: Session[], goalMinutes: number, now = Date.now()): number {
+export function streak(sessions: Session[], goalRounds: number, now = Date.now()): number {
   const perDay = new Map<string, number>()
-  for (const s of sessions) perDay.set(dayKey(s.startedAt), (perDay.get(dayKey(s.startedAt)) ?? 0) + s.durationMs / 60000)
-  const met = (d: Date) => (perDay.get(dayKey(d.getTime())) ?? 0) >= goalMinutes
+  for (const s of sessions) perDay.set(dayKey(s.startedAt), (perDay.get(dayKey(s.startedAt)) ?? 0) + 1)
+  const met = (d: Date) => (perDay.get(dayKey(d.getTime())) ?? 0) >= goalRounds
 
   const day = new Date(now)
   day.setHours(12, 0, 0, 0) // noon avoids DST edge cases when stepping back a day

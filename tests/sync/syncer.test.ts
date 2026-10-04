@@ -36,13 +36,13 @@ describe('merge helpers', () => {
   })
 
   it('settings from an older app version get defaults for missing fields', () => {
-    const { hiddenWallpapers: _h, customWallpapers: _c, dailyGoalMinutes: _d, ...old } = DEFAULT_SETTINGS
+    const { hiddenWallpapers: _h, customWallpapers: _c, dailyGoalRounds: _d, ...old } = DEFAULT_SETTINGS
     const remote = shared(10, { settings: { ...old, targetWpm: 40 } as never })
     const m = mergeShared(shared(1), remote)
     expect(m.settings.targetWpm).toBe(40)
     expect(m.settings.hiddenWallpapers).toEqual([])
     expect(m.settings.customWallpapers).toEqual([])
-    expect(m.settings.dailyGoalMinutes).toBe(DEFAULT_SETTINGS.dailyGoalMinutes)
+    expect(m.settings.dailyGoalRounds).toBe(DEFAULT_SETTINGS.dailyGoalRounds)
   })
 
   it('month buckets use the local month', () => {

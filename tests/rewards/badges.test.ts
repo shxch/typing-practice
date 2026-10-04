@@ -3,7 +3,7 @@ import { UNITS } from '../../src/lessons/curriculum'
 import { BADGES, computeBadges, newBadges } from '../../src/rewards/badges'
 import { dayAt, makeSession } from '../helpers/session'
 
-const R = { targetWpm: 25, targetAccuracy: 0.95, dailyGoalMinutes: 15 }
+const R = { targetWpm: 25, targetAccuracy: 0.95, dailyGoalRounds: 3 }
 const earned = (list: ReturnType<typeof computeBadges>) => list.filter((b) => b.earnedAt !== null).map((b) => b.badge.id)
 const get = (list: ReturnType<typeof computeBadges>, id: string) => list.find((b) => b.badge.id === id)!
 
@@ -54,14 +54,16 @@ describe('earning', () => {
   })
 
   it('day-streak badges need consecutive goal days', () => {
-    const day = (d: number) => makeSession({ startedAt: dayAt(2026, 9, d, 23, 50), durationMs: 16 * 60_000 })
-    expect(get(computeBadges([day(1), day(2), day(3)], R), 'streak-3').earnedAt).not.toBeNull()
-    expect(get(computeBadges([day(1), day(2), day(4)], R), 'streak-3').earnedAt).toBeNull()
-    expect(get(computeBadges([day(1)], R), 'streak-1').earnedAt).not.toBeNull()
+    const day = (d: number) => [0, 1, 2].map((i) => makeSession({ startedAt: dayAt(2026, 9, d, 23, 50 + i) }))
+    const days = (...ds: number[]) => ds.flatMap(day)
+    expect(get(computeBadges(days(1, 2, 3), R), 'streak-3').earnedAt).not.toBeNull()
+    expect(get(computeBadges(days(1, 2, 4), R), 'streak-3').earnedAt).toBeNull()
+    expect(get(computeBadges(days(1), R), 'streak-1').earnedAt).not.toBeNull()
   })
 
-  it('the goal can be met by several short rounds on one day', () => {
-    const list = [0, 1, 2].map((i) => makeSession({ startedAt: dayAt(2026, 9, 1, 10 + i), durationMs: 5 * 60_000 }))
+  it('the goal is met by the round that completes the count, however short the rounds', () => {
+    const list = [0, 1, 2].map((i) => makeSession({ startedAt: dayAt(2026, 9, 1, 10 + i), durationMs: 5_000 }))
+    expect(get(computeBadges(list.slice(0, 2), R), 'streak-1').earnedAt).toBeNull()
     expect(get(computeBadges(list, R), 'streak-1').earnedAt).toBe(list[2].endedAt)
   })
 

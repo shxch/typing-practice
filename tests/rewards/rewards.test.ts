@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { LEVEL_STARS, levelOf, minutesOn, starsByRound, starsFor, streak, totalStars } from '../../src/rewards/rewards'
+import { LEVEL_STARS, levelOf, roundsOn, starsByRound, starsFor, streak, totalStars } from '../../src/rewards/rewards'
 import { dayAt, makeSession } from '../helpers/session'
 
 const R = { targetWpm: 25, targetAccuracy: 0.95 }
@@ -63,24 +63,26 @@ describe('levels', () => {
 })
 
 describe('daily goal and streak', () => {
-  const on = (d: number, minutes: number, h = 12) => makeSession({ startedAt: dayAt(2026, 9, d, h), durationMs: minutes * 60_000 })
+  /** `rounds` rounds played on a day. */
+  const on = (d: number, rounds: number, h = 12) =>
+    Array.from({ length: rounds }, (_, i) => makeSession({ startedAt: dayAt(2026, 9, d, h, i) }))
 
-  it('minutesOn adds up a day', () => {
-    expect(minutesOn([on(1, 5), on(1, 7, 20), on(2, 30)], '2026-09-01')).toBe(12)
+  it('roundsOn counts a day', () => {
+    expect(roundsOn([...on(1, 5), ...on(1, 7, 20), ...on(2, 30)], '2026-09-01')).toBe(12)
   })
 
   it('counts consecutive goal days ending today', () => {
-    const list = [on(1, 15), on(2, 15), on(3, 10), on(3, 6)]
+    const list = [...on(1, 15), ...on(2, 15), ...on(3, 10), ...on(3, 6, 20)]
     expect(streak(list, 15, dayAt(2026, 9, 3, 22))).toBe(3)
   })
 
   it("today's unmet goal doesn't break the streak yet", () => {
-    expect(streak([on(1, 15), on(2, 15), on(3, 1)], 15, dayAt(2026, 9, 3, 8))).toBe(2)
+    expect(streak([...on(1, 15), ...on(2, 15), ...on(3, 1)], 15, dayAt(2026, 9, 3, 8))).toBe(2)
   })
 
   it('a missed day breaks it', () => {
-    expect(streak([on(1, 15), on(3, 15)], 15, dayAt(2026, 9, 3, 22))).toBe(1)
-    expect(streak([on(1, 15)], 15, dayAt(2026, 9, 3, 22))).toBe(0)
+    expect(streak([...on(1, 15), ...on(3, 15)], 15, dayAt(2026, 9, 3, 22))).toBe(1)
+    expect(streak(on(1, 15), 15, dayAt(2026, 9, 3, 22))).toBe(0)
   })
 
   it('survives daylight-saving changes and month/year boundaries', () => {
@@ -89,9 +91,9 @@ describe('daily goal and streak', () => {
       [2026, 10, 31], [2026, 11, 1], [2026, 11, 2], // US fall back
       [2026, 12, 31], [2027, 1, 1],
     ]
-    const s = (y: number, m: number, d: number) => makeSession({ startedAt: dayAt(y, m, d, 0, 30), durationMs: 20 * 60_000 })
-    expect(streak(days.slice(0, 3).map(([y, m, d]) => s(y, m, d)), 15, dayAt(2026, 3, 9, 23))).toBe(3)
-    expect(streak(days.slice(3, 6).map(([y, m, d]) => s(y, m, d)), 15, dayAt(2026, 11, 2, 23))).toBe(3)
-    expect(streak(days.slice(6).map(([y, m, d]) => s(y, m, d)), 15, dayAt(2027, 1, 1, 23))).toBe(2)
+    const s = (y: number, m: number, d: number) => makeSession({ startedAt: dayAt(y, m, d, 0, 30) })
+    expect(streak(days.slice(0, 3).map(([y, m, d]) => s(y, m, d)), 1, dayAt(2026, 3, 9, 23))).toBe(3)
+    expect(streak(days.slice(3, 6).map(([y, m, d]) => s(y, m, d)), 1, dayAt(2026, 11, 2, 23))).toBe(3)
+    expect(streak(days.slice(6).map(([y, m, d]) => s(y, m, d)), 1, dayAt(2027, 1, 1, 23))).toBe(2)
   })
 })

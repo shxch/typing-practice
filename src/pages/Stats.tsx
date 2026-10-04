@@ -5,7 +5,7 @@ import { LineChart } from '../components/charts/LineChart'
 import { KeyPanel } from '../components/KeyPanel'
 import { useT } from '../i18n'
 import { UNITS, computeProgress } from '../lessons/curriculum'
-import { byTime, dailyTime, dayKey, keySummary, sessionsOnDay, totals, type Point, type Totals } from '../lessons/stats'
+import { byTime, dailyRounds, dayKey, keySummary, sessionsOnDay, totals, type Point, type Totals } from '../lessons/stats'
 import { useApp } from '../store/app'
 
 function formatTime(ms: number) {
@@ -85,13 +85,13 @@ export function Stats() {
 
       <div className={panel + ' space-y-3'}>
         <h2 className="font-bold text-slate-800">{t.calendar}</h2>
-        <div className="text-xs text-slate-400">{t.calendarHint(settings.dailyGoalMinutes)}</div>
+        <div className="text-xs text-slate-400">{t.calendarHint(settings.dailyGoalRounds)}</div>
         <Calendar
-          daily={dailyTime(sorted)}
-          goalMinutes={settings.dailyGoalMinutes}
+          daily={dailyRounds(sorted)}
+          goalRounds={settings.dailyGoalRounds}
           weekdays={t.weekdays}
           monthLabel={t.monthLabel}
-          tooltip={(d, m) => t.dayTooltip(d, Math.round(m))}
+          tooltip={(d, n) => t.dayTooltip(d, n)}
         />
       </div>
     </div>

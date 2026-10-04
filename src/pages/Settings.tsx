@@ -213,7 +213,7 @@ export function Settings() {
 
       <Section title={t.secPractice}>
         <Field label={t.dailyGoal} hint={t.dailyGoalHint}>
-          <NumberField min={1} max={120} value={settings.dailyGoalMinutes} onCommit={(v) => updateSettings({ dailyGoalMinutes: v })} />
+          <NumberField min={1} max={200} value={settings.dailyGoalRounds} onCommit={(v) => updateSettings({ dailyGoalRounds: v })} />
         </Field>
         <Field label={t.targetWpm} hint={t.targetWpmHint}>
           <NumberField min={5} max={100} value={settings.targetWpm} onCommit={(v) => updateSettings({ targetWpm: v })} />
