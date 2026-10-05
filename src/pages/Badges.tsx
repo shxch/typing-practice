@@ -7,7 +7,7 @@ import { useApp } from '../store/app'
 
 const GROUPS: BadgeGroup[] = ['rounds', 'speed', 'accuracy', 'streak', 'stars', 'level', 'time', 'keys']
 
-/** The badge wall: earned badges in color with their date, the rest greyed with progress. */
+/** The badge wall: earned badges in color with their date, the rest as grey mystery badges with progress. */
 export function Badges() {
   const t = useT()
   const lang = useApp((s) => s.shared.settings.lang)
@@ -50,16 +50,17 @@ function BadgeCard({ state, lang }: { state: BadgeState; lang: 'zh' | 'en' }) {
   const { badge, earnedAt, progress } = state
   const got = earnedAt !== null
 
+  // A badge keeps its picture, name and how to earn it secret until it is earned.
   return (
     <div
-      title={badge.desc[lang]}
+      title={got ? badge.desc[lang] : undefined}
       className={`rounded-xl border p-3 text-center flex flex-col items-center gap-1 ${
         got ? 'bg-gradient-to-b from-theme-50 to-white border-theme-200 shadow-sm' : 'bg-slate-50 border-slate-200'
       }`}
     >
-      <BadgeIcon badge={badge} dim={!got} />
-      <div className={`font-semibold text-sm ${got ? 'text-slate-800' : 'text-slate-400'}`}>{badge.name[lang]}</div>
-      <div className="text-[11px] leading-snug text-slate-500">{badge.desc[lang]}</div>
+      <BadgeIcon badge={badge} dim={!got} secret={!got} />
+      <div className={`font-semibold text-sm ${got ? 'text-slate-800' : 'text-slate-400'}`}>{got ? badge.name[lang] : '???'}</div>
+      {got && <div className="text-[11px] leading-snug text-slate-500">{badge.desc[lang]}</div>}
       {got ? (
         <div className="text-[11px] text-theme-700 mt-auto">{new Date(earnedAt).toLocaleDateString(lang === 'zh' ? 'zh-CN' : 'en')}</div>
       ) : (

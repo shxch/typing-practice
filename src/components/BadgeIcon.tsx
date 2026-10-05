@@ -93,11 +93,11 @@ const SILVER = 'conic-gradient(from 200deg, #e2e8f0, #94a3b8, #f8fafc, #64748b, 
 
 /**
  * A badge as a round medallion: a gold rim (silver while not yet earned) around its picture from
- * src/assets/badges, or its emoji icon if there is none.
+ * src/assets/badges, or its emoji icon if there is none. A secret badge shows only a question mark.
  */
-export function BadgeIcon({ badge, size = 56, dim = false }: { badge: Badge; size?: number; dim?: boolean }) {
+export function BadgeIcon({ badge, size = 56, dim = false, secret = false }: { badge: Badge; size?: number; dim?: boolean; secret?: boolean }) {
   const rim = Math.max(3, Math.round(size * 0.07))
-  const src = BUILT_IN[badge.id]
+  const src = secret ? undefined : BUILT_IN[badge.id]
   return (
     <span
       className={`relative inline-flex shrink-0 rounded-full ${dim ? 'opacity-60' : 'shadow-[0_2px_6px_rgba(146,64,14,0.45)]'}`}
@@ -111,8 +111,8 @@ export function BadgeIcon({ badge, size = 56, dim = false }: { badge: Badge; siz
         {src ? (
           <Picture id={badge.id} src={src} blur={size * 0.05} />
         ) : (
-          <span className="leading-none" style={{ fontSize: (size - rim * 2) * 0.62 }}>
-            {badge.icon}
+          <span className={`leading-none ${secret ? 'font-bold text-slate-400' : ''}`} style={{ fontSize: (size - rim * 2) * 0.62 }}>
+            {secret ? '?' : badge.icon}
           </span>
         )}
       </span>
