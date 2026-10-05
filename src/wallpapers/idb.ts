@@ -1,4 +1,5 @@
-// Minimal IndexedDB blob store for user wallpapers (localStorage is too small for images).
+// Minimal IndexedDB key-value store for what localStorage is too small for: wallpaper images
+// and the practice log.
 
 const DB = 'typing-practice'
 const STORE = 'wallpapers'
@@ -21,6 +22,6 @@ async function tx<T>(mode: IDBTransactionMode, fn: (s: IDBObjectStore) => IDBReq
   })
 }
 
-export const idbGet = (key: string) => tx<Blob | undefined>('readonly', (s) => s.get(key))
-export const idbPut = (key: string, blob: Blob) => tx('readwrite', (s) => s.put(blob, key))
+export const idbGet = <T = Blob>(key: string) => tx<T | undefined>('readonly', (s) => s.get(key))
+export const idbPut = (key: string, value: unknown) => tx('readwrite', (s) => s.put(value, key))
 export const idbDelete = (key: string) => tx('readwrite', (s) => s.delete(key))

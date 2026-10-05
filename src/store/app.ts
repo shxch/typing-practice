@@ -1,7 +1,8 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { SoundStyle } from '../sound/sound'
-import { monthOf } from '../sync/merge'
+import { mergeSessions, monthOf } from '../sync/merge'
+import { idbGet, idbPut } from '../wallpapers/idb'
 import { DEFAULT_SETTINGS, type InProgress, type Session, type SharedState, type SyncedSettings } from './types'
 
 export type SyncStatus = 'unconfigured' | 'idle' | 'syncing' | 'ok' | 'offline' | 'error'
@@ -54,6 +55,14 @@ export function guessDevice(): string {
   return '设备'
 }
 
+const SESSIONS_KEY = 'app:sessions'
+/**
+ * The practice log outgrows localStorage (and was rewritten there on every key press), so it is
+ * kept in IndexedDB. Until `loadSessions` has moved it there — or if IndexedDB doesn't work —
+ * it stays in localStorage with everything else.
+ */
+let sessionsInIdb = false
+
 export const useApp = create<AppState>()(
   persist(
     (set) => ({
@@ -105,7 +114,7 @@ export const useApp = create<AppState>()(
         return p as never
       },
       partialize: (st) => ({
-        sessions: st.sessions,
+        ...(sessionsInIdb ? {} : { sessions: st.sessions }),
         shared: st.shared,
         config: st.config,
         shas: st.shas,
@@ -128,6 +137,27 @@ export const useApp = create<AppState>()(
     },
   ),
 )
+
+useApp.subscribe((st, prev) => {
+  if (!sessionsInIdb || st.sessions === prev.sessions) return
+  // If the write fails, the next change goes back to localStorage.
+  idbPut(SESSIONS_KEY, st.sessions).catch(() => (sessionsInIdb = false))
+})
+
+/** Load the practice log from IndexedDB, moving it there from localStorage the first time. Call before rendering. */
+export async function loadSessions(): Promise<void> {
+  try {
+    const stored = await idbGet<Record<string, Session>>(SESSIONS_KEY)
+    const legacy = useApp.getState().sessions
+    await idbPut(SESSIONS_KEY, mergeSessions(stored ?? {}, legacy))
+    sessionsInIdb = true
+    // The log is gone but sync remembers the remote files as seen: forget that, so they are pulled again.
+    const lost = !stored && Object.keys(legacy).length === 0
+    useApp.setState((st) => ({ sessions: mergeSessions(stored ?? {}, st.sessions), ...(lost ? { shas: {} } : {}) }))
+  } catch {
+    /* no IndexedDB: the log stays in localStorage */
+  }
+}
 
 export const isConfigured = (c: LocalConfig) => Boolean(c.owner && c.repo && c.token)
 
