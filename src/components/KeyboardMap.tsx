@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { msToWpm, shownPercent, shownWpm } from '../engine/typing'
 import { useT } from '../i18n'
 import type { Progress } from '../lessons/curriculum'
@@ -48,7 +49,7 @@ function tooltip(chars: string[], p: Progress, t: ReturnType<typeof useT>): stri
 }
 
 /** Shows which keys are unlocked, which are weak, and the current focus key. No finger hints. */
-export function KeyboardMap({ progress }: { progress: Progress }) {
+export const KeyboardMap = memo(function KeyboardMap({ progress }: { progress: Progress }) {
   const t = useT()
   return (
     <div className="flex flex-col gap-1.5 items-start [--k:clamp(1.75rem,5.4vw,2.75rem)]">
@@ -81,4 +82,4 @@ export function KeyboardMap({ progress }: { progress: Progress }) {
       />
     </div>
   )
-}
+})

@@ -207,8 +207,19 @@ export function Practice() {
   }, [device, soundStyle, finish, newRound, setInProgress])
 
   const st = current.state
-  const resumedFromElsewhere = inProgress && inProgress.device !== device && st.pos > 0
   const stageName = { A: t.stageA, B: t.stageB, C: t.stageC }[progress.stage]
+  // Stable between key presses, so the (memoized) key panel isn't redrawn while typing.
+  const keyPanelHeader = useMemo(
+    () => (
+      <div className="text-sm text-slate-600 pb-0.5">
+        <span className="font-semibold text-theme-700">{stageName}</span>
+        <span className="mx-2">·</span>
+        {t.unlockedUnits(progress.unlockedUnits, UNITS.length)}
+      </div>
+    ),
+    [stageName, t, progress.unlockedUnits],
+  )
+  const resumedFromElsewhere = inProgress && inProgress.device !== device && st.pos > 0
 
   const toggle = (label: string, onClick: () => void) => (
     <button
@@ -236,13 +247,7 @@ export function Practice() {
             settings={settings}
             selected={selectedKey}
             onSelect={setSelectedKey}
-            header={
-              <div className="text-sm text-slate-600 pb-0.5">
-                <span className="font-semibold text-theme-700">{stageName}</span>
-                <span className="mx-2">·</span>
-                {t.unlockedUnits(progress.unlockedUnits, UNITS.length)}
-              </div>
-            }
+            header={keyPanelHeader}
           />
         </div>
       )}

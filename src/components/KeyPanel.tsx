@@ -1,4 +1,4 @@
-import { useMemo, type ReactNode } from 'react'
+import { memo, useMemo, type ReactNode } from 'react'
 import { msToWpm, shownPercent, shownWpm } from '../engine/typing'
 import { useT } from '../i18n'
 import { UNITS, targetMs, type Progress, type Stage, type UnlockSettings } from '../lessons/curriculum'
@@ -26,7 +26,7 @@ interface Props {
 }
 
 /** keybr-style key overview: every key's speed at a glance, plus the chosen key's progress chart. */
-export function KeyPanel({ progress, sessions, settings, selected, onSelect, header }: Props) {
+export const KeyPanel = memo(function KeyPanel({ progress, sessions, settings, selected, onSelect, header }: Props) {
   const t = useT()
   const sorted = useMemo(() => byTime(Object.values(sessions)), [sessions])
   const key = selected && progress.unlocked.has(selected) ? selected : progress.focus
@@ -125,7 +125,7 @@ export function KeyPanel({ progress, sessions, settings, selected, onSelect, hea
     </div>
     </div>
   )
-}
+})
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (

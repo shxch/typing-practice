@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { useT } from '../i18n'
 import { dayKey } from '../lessons/stats'
 import { levelOf, roundsOn, streak, totalStars } from '../rewards/rewards'
@@ -8,8 +9,8 @@ interface Props {
   settings: SyncedSettings
 }
 
-/** Today's goal, streak and level — the reasons to come back tomorrow. */
-export function DailyBar({ sessions, settings }: Props) {
+/** Today's goal, streak and level — the reasons to come back tomorrow. Memoized: nothing here changes while typing. */
+export const DailyBar = memo(function DailyBar({ sessions, settings }: Props) {
   const t = useT()
   const goal = settings.dailyGoalRounds
   const today = roundsOn(sessions, dayKey(Date.now()))
@@ -66,4 +67,4 @@ export function DailyBar({ sessions, settings }: Props) {
       </div>
     </div>
   )
-}
+})
