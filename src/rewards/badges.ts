@@ -15,7 +15,6 @@ interface Ctx {
   rounds: number
   timeMs: number
   bestWpm: number
-  bestAcc: number
   perfectRounds: number
   fiveStarRounds: number
   rainbowRounds: number
@@ -25,8 +24,7 @@ interface Ctx {
   /** Consecutive rounds (so far) at 95%+ accuracy. */
   accurateRun: number
   bestAccurateRun: number
-  /** Consecutive days meeting the daily goal, ending on the latest session's day. */
-  dayStreak: number
+  /** Longest run of consecutive days meeting the daily goal. */
   bestDayStreak: number
   goalDays: number
   maxUnits: number
@@ -170,7 +168,6 @@ export function computeBadges(sessions: Session[], r: BadgeRules, currentUnits =
     rounds: 0,
     timeMs: 0,
     bestWpm: 0,
-    bestAcc: 0,
     perfectRounds: 0,
     fiveStarRounds: 0,
     rainbowRounds: 0,
@@ -178,7 +175,6 @@ export function computeBadges(sessions: Session[], r: BadgeRules, currentUnits =
     level: 1,
     accurateRun: 0,
     bestAccurateRun: 0,
-    dayStreak: 0,
     bestDayStreak: 0,
     goalDays: 0,
     maxUnits: 0,
@@ -197,7 +193,6 @@ export function computeBadges(sessions: Session[], r: BadgeRules, currentUnits =
     c.rounds++
     c.timeMs += s.durationMs
     c.bestWpm = Math.max(c.bestWpm, s.wpm)
-    c.bestAcc = Math.max(c.bestAcc, s.accuracy)
     if (s.accuracy >= 0.9999) c.perfectRounds++
     if ((stars.get(s.id) ?? 0) >= 5) c.fiveStarRounds++
     if (stars.get(s.id) === 6) c.rainbowRounds++
@@ -223,7 +218,6 @@ export function computeBadges(sessions: Session[], r: BadgeRules, currentUnits =
         n++
         d.setDate(d.getDate() - 1)
       }
-      c.dayStreak = n
       c.bestDayStreak = Math.max(c.bestDayStreak, n)
     }
     check(s.endedAt || s.startedAt)

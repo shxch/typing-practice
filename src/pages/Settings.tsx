@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { WallpaperPicker } from '../components/WallpaperPicker'
 import { useT } from '../i18n'
 import { UNITS, computeProgress, unitLabel } from '../lessons/curriculum'
@@ -75,7 +75,7 @@ export function Settings() {
   const t = useT()
   const [check, setCheck] = useState<string>('')
 
-  const progress = computeProgress(Object.values(sessions), settings)
+  const progress = useMemo(() => computeProgress(Object.values(sessions), settings), [sessions, settings])
   const earned = progress.earnedUnits
   const units = progress.unlockedUnits
   // A jump that practice has already caught up with no longer does anything.
@@ -93,9 +93,14 @@ export function Settings() {
     }
   }
 
-  /** A few keystrokes, a mistake, then the end-of-round chime. */
-  function trySound(style: SoundStyle = config.soundStyle) {
+  /** A few keystrokes, the third one a space. */
+  function tryKeys(style: SoundStyle) {
     ;[0, 150, 300, 450].forEach((ms, i) => setTimeout(() => playCorrect(style, i === 2), ms))
+  }
+
+  /** A few keystrokes, a mistake, then the end-of-round chime. */
+  function trySound() {
+    tryKeys(config.soundStyle)
     setTimeout(() => playError(), 700)
     setTimeout(() => playFinish(), 1100)
   }
@@ -143,7 +148,7 @@ export function Settings() {
               onChange={(e) => setConfig({ volume: Number(e.target.value) })}
               className="flex-1 accent-theme-600"
             />
-            <button onClick={() => trySound()} disabled={!config.sound} className="text-sm text-theme-600 underline disabled:opacity-40">
+            <button onClick={trySound} disabled={!config.sound} className="text-sm text-theme-600 underline disabled:opacity-40">
               {t.soundTest}
             </button>
           </div>
@@ -156,7 +161,7 @@ export function Settings() {
                 disabled={!config.sound}
                 onClick={() => {
                   setConfig({ soundStyle: v })
-                  ;[0, 150, 300, 450].forEach((ms, i) => setTimeout(() => playCorrect(v, i === 2), ms))
+                  tryKeys(v)
                 }}
                 className={`px-4 py-1.5 rounded-lg border disabled:opacity-40 ${
                   config.soundStyle === v ? 'bg-theme-600 border-theme-600 text-white' : 'bg-white border-slate-300 text-slate-600'

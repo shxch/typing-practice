@@ -44,6 +44,15 @@ function fromBase64(b64: string): string {
   return new TextDecoder().decode(Uint8Array.from(bin, (c) => c.charCodeAt(0)))
 }
 
+/** GitHub's explanation of a failed request, or the bare status text. */
+async function errorMessage(res: Response): Promise<string> {
+  try {
+    return (await res.json()).message ?? res.statusText
+  } catch {
+    return res.statusText
+  }
+}
+
 export class GitHubClient {
   constructor(
     private cfg: RepoConfig,
@@ -67,15 +76,7 @@ export class GitHubClient {
         ...(init.body ? { 'Content-Type': 'application/json' } : {}),
       },
     })
-    if (!res.ok && res.status !== 404) {
-      let msg = res.statusText
-      try {
-        msg = (await res.json()).message ?? msg
-      } catch {
-        /* keep statusText */
-      }
-      throw new GitHubError(res.status, msg)
-    }
+    if (!res.ok && res.status !== 404) throw new GitHubError(res.status, await errorMessage(res))
     return res
   }
 
@@ -156,13 +157,7 @@ export class GitHubClient {
       headers: { Authorization: `Bearer ${this.cfg.token}`, Accept: 'application/vnd.github+json' },
     })
     if (!res.ok) {
-      let msg = res.statusText
-      try {
-        msg = (await res.json()).message ?? msg
-      } catch {
-        /* keep statusText */
-      }
-      throw new GitHubError(res.status, res.status === 404 ? '找不到仓库或 token 无权访问' : msg || `HTTP ${res.status}`)
+      throw new GitHubError(res.status, res.status === 404 ? '找不到仓库或 token 无权访问' : (await errorMessage(res)) || `HTTP ${res.status}`)
     }
   }
 }

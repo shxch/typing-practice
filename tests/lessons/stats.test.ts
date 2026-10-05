@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { byTime, dailyRounds, dayKey, keySpeedSeries, keySummary, lastWithDelta, sessionsOnDay, totals } from '../../src/lessons/stats'
+import { byTime, dailyRounds, dayKey, keySpeedSeries, keySummary, sessionsOnDay, totals } from '../../src/lessons/stats'
 import { dayAt, makeSession } from '../helpers/session'
 
 const k = (n: number, t: number, ms: number, miss = 0) => ({ n, miss, t, ms })
@@ -68,15 +68,5 @@ describe('days', () => {
     ]
     expect(Object.fromEntries(dailyRounds(list))).toEqual({ '2026-09-01': 2, '2026-09-02': 1 })
     expect(sessionsOnDay(list, '2026-09-01')).toHaveLength(2)
-  })
-})
-
-describe('lastWithDelta', () => {
-  it('compares the last round to the average of the ones before', () => {
-    const list = [10, 20, 30].map((wpm, i) => makeSession({ wpm, startedAt: i }))
-    expect(lastWithDelta(list, (s) => s.wpm)).toEqual({ value: 30, delta: 15 })
-    expect(lastWithDelta(list.slice(0, 1), (s) => s.wpm)).toEqual({ value: 10, delta: null })
-    expect(lastWithDelta([], (s) => s.wpm)).toBeNull()
-    expect(lastWithDelta(list, (s) => s.wpm, 1)).toEqual({ value: 30, delta: 10 })
   })
 })

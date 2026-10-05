@@ -89,17 +89,3 @@ export function dailyRounds(sessions: Session[]): Map<string, number> {
   for (const s of sessions) out.set(dayKey(s.startedAt), (out.get(dayKey(s.startedAt)) ?? 0) + 1)
   return out
 }
-
-/** Last lesson's value and its change against the average of the lessons before it. */
-export function lastWithDelta(
-  sorted: Session[],
-  pick: (s: Session) => number,
-  window = 10,
-): { value: number; delta: number | null } | null {
-  if (sorted.length === 0) return null
-  const last = pick(sorted[sorted.length - 1])
-  const before = sorted.slice(-window - 1, -1)
-  if (before.length === 0) return { value: last, delta: null }
-  const avg = before.reduce((a, s) => a + pick(s), 0) / before.length
-  return { value: last, delta: last - avg }
-}
