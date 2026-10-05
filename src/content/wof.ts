@@ -1,7 +1,6 @@
 // Vocabulary from the world of Wings of Fire (Tui T. Sutherland): the words its dragons,
 // tribes and places are made of. Only single words and names — no text from the books.
-// Lessons prefer these and fall back to the general word list only when the keys unlocked
-// so far can't make enough of them.
+// Lessons take about half their words from here and half from the general word list.
 
 const RAW_WORDS = `
 dragon dragons dragonet dragonets wing wings winged scale scales scaled claw claws clawed talon talons tail tails

@@ -236,7 +236,7 @@ export function Practice() {
   return (
     <div className="space-y-4">
       <div className={`${panel} px-5 py-4`}>
-        <DailyBar sessions={sessionList} settings={settings} />
+        <DailyBar sessions={sessionList} settings={settings} day={dayKey(Date.now())} />
       </div>
 
       {showKeyStats && (

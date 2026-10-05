@@ -48,7 +48,9 @@ async function runOnce() {
 
     // Merge into the *current* state: the user may have kept typing while we synced.
     useApp.setState((cur) => {
-      const sessions = mergeSessions(result.remoteSessions, cur.sessions)
+      // Keep the same object when the remote had nothing new, so nothing is recomputed or saved again.
+      const added = Object.keys(result.remoteSessions).some((id) => !(id in cur.sessions))
+      const sessions = added ? mergeSessions(result.remoteSessions, cur.sessions) : cur.sessions
       // Still dirty: months added while we synced, plus months of sessions finished meanwhile.
       // (Everything else that was dirty has just been pushed.)
       const synced = new Set(st.dirtyMonths)

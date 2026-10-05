@@ -1,19 +1,20 @@
 import { memo } from 'react'
 import { useT } from '../i18n'
-import { dayKey } from '../lessons/stats'
 import { levelOf, roundsOn, streak, totalStars } from '../rewards/rewards'
 import type { Session, SyncedSettings } from '../store/types'
 
 interface Props {
   sessions: Session[]
   settings: SyncedSettings
+  /** Today (see `dayKey`), passed in so the bar moves on to a new day although it is memoized. */
+  day: string
 }
 
 /** Today's goal, streak and level — the reasons to come back tomorrow. Memoized: nothing here changes while typing. */
-export const DailyBar = memo(function DailyBar({ sessions, settings }: Props) {
+export const DailyBar = memo(function DailyBar({ sessions, settings, day }: Props) {
   const t = useT()
   const goal = settings.dailyGoalRounds
-  const today = roundsOn(sessions, dayKey(Date.now()))
+  const today = roundsOn(sessions, day)
   const done = today >= goal
   const days = streak(sessions, goal)
   const stars = totalStars(sessions, settings)
