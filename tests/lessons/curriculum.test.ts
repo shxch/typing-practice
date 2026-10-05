@@ -35,7 +35,7 @@ describe('UNITS', () => {
     expect(lower.length).toBe(26)
     expect(new Set(upper).size).toBe(26)
     expect(upper.length).toBe(26)
-    const lastLower = UNITS.findLastIndex((u) => u.stage === 'A')
+    const lastLower = UNITS.map((u) => u.stage).lastIndexOf('A')
     const firstUpper = UNITS.findIndex((u) => u.stage === 'B')
     expect(lastLower).toBeLessThan(firstUpper)
   })

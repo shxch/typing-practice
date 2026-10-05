@@ -95,7 +95,7 @@ describe('generateLesson — every unit, many focus keys and seeds', () => {
   })
 
   it('stage A lessons are lowercase only; stage B ones contain capitals', () => {
-    const lastA = UNITS.findLastIndex((u) => u.stage === 'A') + 1
+    const lastA = UNITS.map((u) => u.stage).lastIndexOf('A') + 1
     expect(generateLesson(progressAt(lastA), 30, seeded(1))).toMatch(/^[a-z ]+$/)
     expect(generateLesson(progressAt(lastA + 1), 30, seeded(1))).toMatch(/[A-Z]/)
   })
