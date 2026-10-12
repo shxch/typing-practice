@@ -8,7 +8,7 @@ import { accuracy, backspace, createState, resume, shownPercent, shownWpm, slowe
 import { useT } from '../i18n'
 import { UNITS, computeProgress, type Progress } from '../lessons/curriculum'
 import { generateLesson } from '../lessons/generate'
-import { dayKey } from '../lessons/stats'
+import { dayKey, score, topScore } from '../lessons/stats'
 import { computeBadges, newBadges } from '../rewards/badges'
 import { levelOf, roundsOn, starsByRound, streak, totalStars } from '../rewards/rewards'
 import { playCorrect, playDelete, playError, playFinish, playUnlock } from '../sound/sound'
@@ -46,6 +46,7 @@ export function Practice() {
 
   const sessionList = useMemo(() => Object.values(sessions), [sessions])
   const progress = useMemo(() => computeProgress(sessionList, settings), [sessionList, settings])
+  const best = useMemo(() => topScore(sessionList), [sessionList])
   const [selectedKey, setSelectedKey] = useState<string | null>(null)
 
   // A lesson that hasn't been typed into yet lives only here; once typing starts it moves
@@ -123,9 +124,15 @@ export function Practice() {
       if (settings.manualUnits !== null && afterProgress.earnedUnits >= settings.manualUnits) {
         useApp.getState().updateSettings({ manualUnits: null })
       }
+      const roundScore = score(session)
+      // The very first round has nothing to beat.
+      const newTopScore = sessionList.length > 0 && roundScore > best
       const roundResult: RoundResult = {
         wpm: session.wpm,
         accuracy: session.accuracy,
+        score: roundScore,
+        topScore: Math.max(best, roundScore),
+        newTopScore,
         slowest: slowestKeys(state.keyStats),
         newKeys,
         stars: starsByRound(after, settings).get(session.id) ?? 1,
@@ -137,10 +144,10 @@ export function Practice() {
       resultRef.current = roundResult
       setResult(roundResult)
       playFinish()
-      if (newKeys.length > 0 || goalJustDone || levelAfter > levelBefore || badges.length > 0) playUnlock()
+      if (newKeys.length > 0 || goalJustDone || levelAfter > levelBefore || badges.length > 0 || newTopScore) playUnlock()
       void syncNow()
     },
-    [progress, device, addSession, setInProgress, sessionList, settings, t],
+    [progress, device, addSession, setInProgress, sessionList, best, settings, t],
   )
 
   useEffect(() => {
@@ -274,6 +281,11 @@ export function Practice() {
       ) : (
         <div className={`${panel} ${showKeyboard ? 'px-10 py-7' : 'px-12 py-10'}`}>
           <div className="flex justify-end gap-5 font-mono text-sm text-slate-500 -mt-2 mb-2">
+            {best > 0 && (
+              <span className="mr-auto">
+                {t.topScore} {Math.floor(best)}
+              </span>
+            )}
             <span>{shownWpm(wpm(st))} WPM</span>
             <span>{shownPercent(accuracy(st))}%</span>
             <span>

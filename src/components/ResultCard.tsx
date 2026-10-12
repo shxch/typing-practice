@@ -8,6 +8,11 @@ import type { Stars } from '../rewards/rewards'
 export interface RoundResult {
   wpm: number
   accuracy: number
+  score: number
+  /** Best score of all rounds, this one included. */
+  topScore: number
+  /** This round beat every earlier one. */
+  newTopScore: boolean
   slowest: { ch: string; ms: number }[]
   newKeys: string[]
   stars: Stars
@@ -73,6 +78,11 @@ export function ResultCard({ result, onNext }: { result: RoundResult; onNext: ()
           {result.streak > 1 && <div className="text-base font-medium mt-1">{t.goalStreakNote(result.streak)}</div>}
         </div>
       )}
+      {result.newTopScore && (
+        <div className="rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-white py-3 text-xl font-bold">
+          {t.newTopScore}
+        </div>
+      )}
       {result.badges.length > 0 && (
         <div className="rounded-xl bg-gradient-to-r from-theme-400 to-theme-600 text-white py-3 px-4">
           <div className="text-lg font-bold mb-2">{t.newBadges}</div>
@@ -110,6 +120,13 @@ export function ResultCard({ result, onNext }: { result: RoundResult; onNext: ()
         </div>
       )}
       <div className="flex justify-center gap-12">
+        <div>
+          <div className="text-5xl font-bold text-amber-500">{Math.floor(result.score)}</div>
+          <div className="text-slate-500 mt-1">{t.score}</div>
+          <div className="text-xs text-slate-400">
+            {t.topScore} {Math.floor(result.topScore)}
+          </div>
+        </div>
         <div>
           <div className="text-5xl font-bold text-theme-600">{shownWpm(result.wpm)}</div>
           <div className="text-slate-500 mt-1">{t.speed}</div>

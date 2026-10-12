@@ -51,9 +51,25 @@ export function keySummary(sorted: Session[], ch: string, recentLessons = 5): Ke
   }
 }
 
+/**
+ * keybr.com's score for one round: speed (characters per minute) × complexity ÷ (errors + 1)
+ * × (length ÷ 50), where complexity is the number of different characters in the text. Longer,
+ * more varied and cleaner rounds score higher; every mistyped character cuts the score hard.
+ * Derived from what a session already records, so older rounds have a score too.
+ */
+export function score(s: Pick<Session, 'wpm' | 'chars' | 'keyStats'>): number {
+  const stats = Object.values(s.keyStats)
+  const errors = stats.reduce((a, k) => a + k.miss, 0)
+  return ((s.wpm * 5 * stats.length) / (errors + 1)) * (s.chars / 50)
+}
+
+export const topScore = (sessions: Session[]) => sessions.reduce((a, s) => Math.max(a, score(s)), 0)
+
 export interface Totals {
   timeMs: number
   lessons: number
+  topScore: number | null
+  avgScore: number | null
   topWpm: number | null
   avgWpm: number | null
   topAcc: number | null
@@ -61,11 +77,13 @@ export interface Totals {
 }
 
 export function totals(sessions: Session[]): Totals {
-  if (sessions.length === 0) return { timeMs: 0, lessons: 0, topWpm: null, avgWpm: null, topAcc: null, avgAcc: null }
+  if (sessions.length === 0) return { timeMs: 0, lessons: 0, topScore: null, avgScore: null, topWpm: null, avgWpm: null, topAcc: null, avgAcc: null }
   const sum = (f: (s: Session) => number) => sessions.reduce((a, s) => a + f(s), 0)
   return {
     timeMs: sum((s) => s.durationMs),
     lessons: sessions.length,
+    topScore: topScore(sessions),
+    avgScore: sum(score) / sessions.length,
     topWpm: Math.max(...sessions.map((s) => s.wpm)),
     avgWpm: sum((s) => s.wpm) / sessions.length,
     topAcc: Math.max(...sessions.map((s) => s.accuracy)),

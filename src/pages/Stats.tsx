@@ -104,6 +104,8 @@ function TotalsCard({ title, v }: { title: string; v: Totals }) {
   const cells: [string, string][] = [
     [t.timeLabel, formatTime(v.timeMs)],
     [t.lessonsLabel, String(v.lessons)],
+    [t.topScore, f(v.topScore)],
+    [t.avgScore, f(v.avgScore)],
     [t.topSpeed, `${f(v.topWpm)} WPM`],
     [t.avgSpeed, `${f(v.avgWpm)} WPM`],
     [t.topAcc, f(v.topAcc, true)],
@@ -112,7 +114,7 @@ function TotalsCard({ title, v }: { title: string; v: Totals }) {
   return (
     <div className={panel}>
       <h2 className="font-bold text-slate-800 mb-3">{title}</h2>
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-4 gap-3">
         {cells.map(([label, value]) => (
           <div key={label}>
             <div className="text-xs text-slate-500">{label}</div>

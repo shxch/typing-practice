@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { byTime, dailyRounds, dayKey, keySpeedSeries, keySummary, sessionsOnDay, totals } from '../../src/lessons/stats'
-import { dayAt, makeSession } from '../helpers/session'
+import { byTime, dailyRounds, dayKey, keySpeedSeries, keySummary, score, sessionsOnDay, topScore, totals } from '../../src/lessons/stats'
+import { dayAt, makeSession, statsFor } from '../helpers/session'
 
 const k = (n: number, t: number, ms: number, miss = 0) => ({ n, miss, t, ms })
 
@@ -44,12 +44,30 @@ describe('per-key statistics', () => {
 
 describe('totals', () => {
   it('is empty-safe', () => {
-    expect(totals([])).toEqual({ timeMs: 0, lessons: 0, topWpm: null, avgWpm: null, topAcc: null, avgAcc: null })
+    expect(totals([])).toEqual({ timeMs: 0, lessons: 0, topScore: null, avgScore: null, topWpm: null, avgWpm: null, topAcc: null, avgAcc: null })
   })
 
   it('computes top and average', () => {
     const t = totals([makeSession({ wpm: 10, accuracy: 0.9, durationMs: 1000 }), makeSession({ wpm: 30, accuracy: 1, durationMs: 2000 })])
-    expect(t).toEqual({ timeMs: 3000, lessons: 2, topWpm: 30, avgWpm: 20, topAcc: 1, avgAcc: 0.95 })
+    expect(t).toMatchObject({ timeMs: 3000, lessons: 2, topWpm: 30, avgWpm: 20, topAcc: 1, avgAcc: 0.95 })
+  })
+})
+
+describe('score', () => {
+  // 20 WPM = 100 characters a minute; 4 different characters; 100 characters long.
+  const round = (miss: number, p = {}) => makeSession({ wpm: 20, chars: 100, keyStats: statsFor('asdf', 300, 25, miss), ...p })
+
+  it('follows keybr: speed × complexity ÷ (errors + 1) × length ÷ 50', () => {
+    expect(score(round(0))).toBe(100 * 4 * 2)
+    // One mistake on each of the four keys.
+    expect(score(round(1))).toBe((100 * 4 * 2) / 5)
+    expect(score(round(0, { chars: 50 }))).toBe(100 * 4)
+    expect(score(makeSession())).toBe(0)
+  })
+
+  it('totals carry the top and average score', () => {
+    expect(totals([round(0), round(1)])).toMatchObject({ topScore: 800, avgScore: 480 })
+    expect(topScore([])).toBe(0)
   })
 })
 

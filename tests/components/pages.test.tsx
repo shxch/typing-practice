@@ -85,6 +85,9 @@ describe('ResultCard', () => {
         result={{
           wpm: 23.6,
           accuracy: 0.974,
+          score: 812.7,
+          topScore: 812.7,
+          newTopScore: true,
           slowest: [{ ch: ' ', ms: 500 }, { ch: 'q', ms: 900 }],
           newKeys: ['r'],
           stars: 2,
@@ -99,6 +102,8 @@ describe('ResultCard', () => {
     // Shown numbers round down: 23.6 WPM is not 24 yet.
     expect(screen.getByText('23')).toBeTruthy()
     expect(screen.getByText('97%')).toBeTruthy()
+    expect(screen.getByText('812')).toBeTruthy()
+    expect(screen.getByText('🏆 新的最高分！')).toBeTruthy()
     expect(screen.getByText(BADGES[0].name.zh)).toBeTruthy()
     noBadText()
     fireEvent.click(screen.getByRole('button'))
