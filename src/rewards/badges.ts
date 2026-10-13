@@ -38,8 +38,8 @@ export interface Badge {
   id: string
   group: BadgeGroup
   icon: string
-  name: { zh: string; en: string }
-  desc: { zh: string; en: string }
+  name: string
+  desc: string
   /** Kept secret (not listed, not counted) until it is earned. */
   hidden?: boolean
   /** Progress toward the badge, 0..1 (1 = earned). */
@@ -60,114 +60,114 @@ const CAPITAL_UNITS = LOWER_UNITS + UNITS.filter((u) => u.stage === 'B').length
 function tiers(
   group: BadgeGroup,
   value: (c: Ctx) => number,
-  list: [goal: number, icon: string, zh: string, en: string, descZh: string, descEn: string][],
+  list: [goal: number, icon: string, name: string, desc: string][],
 ): Badge[] {
-  return list.map(([goal, icon, zh, en, descZh, descEn]) => ({
+  return list.map(([goal, icon, name, desc]) => ({
     id: `${group}-${goal}`,
     group,
     icon,
-    name: { zh, en },
-    desc: { zh: descZh, en: descEn },
+    name,
+    desc,
     progress: (c) => ratio(value(c), goal),
   }))
 }
 
 export const BADGES: Badge[] = [
   ...tiers('rounds', (c) => c.rounds, [
-    [1, '🥚', '破壳而出', 'Hatchling', '完成第 1 轮练习', 'Finish your first round'],
-    [10, '🐣', '小小龙崽', 'Dragonet', '完成 10 轮练习', 'Finish 10 rounds'],
-    [50, '🐉', '学院新生', 'Jade Mountain Student', '完成 50 轮练习', 'Finish 50 rounds'],
-    [100, '📜', '勤学之翼', 'Scroll Keeper', '完成 100 轮练习', 'Finish 100 rounds'],
-    [250, '🏔️', '玉山守护者', 'Guardian of Jade Mountain', '完成 250 轮练习', 'Finish 250 rounds'],
-    [500, '👑', '龙族传奇', 'Dragon Legend', '完成 500 轮练习', 'Finish 500 rounds'],
+    [1, '🥚', 'Hatchling', 'Finish your first round'],
+    [10, '🐣', 'Dragonet', 'Finish 10 rounds'],
+    [50, '🐉', 'Jade Mountain Student', 'Finish 50 rounds'],
+    [100, '📜', 'Scroll Keeper', 'Finish 100 rounds'],
+    [250, '🏔️', 'Guardian of Jade Mountain', 'Finish 250 rounds'],
+    [500, '👑', 'Dragon Legend', 'Finish 500 rounds'],
   ]),
   ...tiers('speed', (c) => c.bestWpm, [
     // Slowest to fastest: SeaWing, NightWing, SandWing, RainWing, then SkyWing (the fastest fliers).
-    [30, '🌊', 'SeaWing 之速', 'SeaWing Speed', '单轮速度达到 30 WPM', 'Reach 30 WPM in a round'],
-    [40, '🌙', 'NightWing 之速', 'NightWing Speed', '单轮速度达到 40 WPM', 'Reach 40 WPM in a round'],
-    [50, '🏜️', 'SandWing 之速', 'SandWing Speed', '单轮速度达到 50 WPM', 'Reach 50 WPM in a round'],
-    [60, '🦎', 'RainWing 之速', 'RainWing Speed', '单轮速度达到 60 WPM', 'Reach 60 WPM in a round'],
-    [70, '☁️', 'SkyWing 之速', 'SkyWing Speed', '单轮速度达到 70 WPM', 'Reach 70 WPM in a round'],
+    [30, '🌊', 'SeaWing Speed', 'Reach 30 WPM in a round'],
+    [40, '🌙', 'NightWing Speed', 'Reach 40 WPM in a round'],
+    [50, '🏜️', 'SandWing Speed', 'Reach 50 WPM in a round'],
+    [60, '🦎', 'RainWing Speed', 'Reach 60 WPM in a round'],
+    [70, '☁️', 'SkyWing Speed', 'Reach 70 WPM in a round'],
   ]),
   // The top score (see `score` in lessons/stats.ts). A clean round scores about 10 × WPM × the
   // number of different keys in it, so the top score climbs as keys unlock: about 3,500 with the
   // first ten keys, 8,000-10,000 with every lowercase letter, 20,000 with capitals and punctuation
   // at 50 WPM. Past the early tiers each step is roughly two or three more keys.
   ...tiers('score', (c) => c.bestScore, [
-    [500, '🪙', '第一枚金币', 'First Coin', '最高分达到 500', 'Reach a top score of 500'],
-    [1000, '💰', '小小宝藏', 'Small Hoard', '最高分达到 1000', 'Reach a top score of 1,000'],
-    [2000, '🧰', '宝箱满满', 'Treasure Chest', '最高分达到 2000', 'Reach a top score of 2,000'],
-    [3000, '🏺', '龙之宝库', "Dragon's Hoard", '最高分达到 3000', 'Reach a top score of 3,000'],
-    [4000, '🔷', '蓝宝石', 'Sapphire', '最高分达到 4000', 'Reach a top score of 4,000'],
-    [5000, '🟢', '祖母绿', 'Emerald', '最高分达到 5000', 'Reach a top score of 5,000'],
-    [6500, '♦️', '红宝石', 'Ruby', '最高分达到 6500', 'Reach a top score of 6,500'],
-    [8000, '💎', '钻石', 'Diamond', '最高分达到 8000', 'Reach a top score of 8,000'],
-    [10000, '👁️', '缟玛瑙之眼', 'Eye of Onyx', '最高分达到 10000', 'Reach a top score of 10,000'],
-    [12500, '🌙', '访梦石', 'Dreamvisitor', '最高分达到 12500', 'Reach a top score of 12,500'],
-    [15000, '☄️', '天火石', 'Skyfire', '最高分达到 15000', 'Reach a top score of 15,000'],
-    [20000, '🏆', '女王的宝藏', "Queen's Treasure", '最高分达到 20000', 'Reach a top score of 20,000'],
+    [500, '🪙', 'First Coin', 'Reach a top score of 500'],
+    [1000, '💰', 'Small Hoard', 'Reach a top score of 1,000'],
+    [2000, '🧰', 'Treasure Chest', 'Reach a top score of 2,000'],
+    [3000, '🏺', "Dragon's Hoard", 'Reach a top score of 3,000'],
+    [4000, '🔷', 'Sapphire', 'Reach a top score of 4,000'],
+    [5000, '🟢', 'Emerald', 'Reach a top score of 5,000'],
+    [6500, '♦️', 'Ruby', 'Reach a top score of 6,500'],
+    [8000, '💎', 'Diamond', 'Reach a top score of 8,000'],
+    [10000, '👁️', 'Eye of Onyx', 'Reach a top score of 10,000'],
+    [12500, '🌙', 'Dreamvisitor', 'Reach a top score of 12,500'],
+    [15000, '☄️', 'Skyfire', 'Reach a top score of 15,000'],
+    [20000, '🏆', "Queen's Treasure", 'Reach a top score of 20,000'],
   ]),
   ...tiers('accuracy', (c) => c.perfectRounds, [
-    [1, '💎', '零失误', 'Flawless', '有一轮 100% 全对', 'A round with 100% accuracy'],
-    [10, '🔮', '预言家之眼', "Seer's Eye", '10 轮 100% 全对', '10 rounds at 100% accuracy'],
+    [1, '💎', 'Flawless', 'A round with 100% accuracy'],
+    [10, '🔮', "Seer's Eye", '10 rounds at 100% accuracy'],
   ]),
   ...tiers('accuracy', (c) => c.bestAccurateRun, [
-    [5, '🎯', '稳稳的爪子', 'Steady Talons', '连续 5 轮准确率 95% 以上', '5 rounds in a row at 95%+ accuracy'],
-    [20, '🛡️', 'IceWing 般精准', 'IceWing Precision', '连续 20 轮准确率 95% 以上', '20 rounds in a row at 95%+ accuracy'],
+    [5, '🎯', 'Steady Talons', '5 rounds in a row at 95%+ accuracy'],
+    [20, '🛡️', 'IceWing Precision', '20 rounds in a row at 95%+ accuracy'],
   ]),
   ...tiers('streak', (c) => c.goalDays, [
-    [1, '✅', '今日达成', 'Goal Reached', '第一次完成每日目标', "Meet the daily goal for the first time"],
+    [1, '✅', 'Goal Reached', "Meet the daily goal for the first time"],
   ]),
   ...tiers('streak', (c) => c.bestDayStreak, [
-    [3, '🔥', '小火苗', 'Little Flame', '连续 3 天完成每日目标', 'Meet the daily goal 3 days in a row'],
-    [7, '🌙', '一周月光', 'Week of Moons', '连续 7 天完成每日目标', 'Meet the daily goal 7 days in a row'],
-    [14, '🌟', '坚持之星', 'Steadfast Heart', '连续 14 天完成每日目标', 'Meet the daily goal 14 days in a row'],
-    [30, '🌋', '不灭之火', 'Undying Fire', '连续 30 天完成每日目标', 'Meet the daily goal 30 days in a row'],
-    [100, '🐲', '百日神龙', 'Hundred-Day Dragon', '连续 100 天完成每日目标', 'Meet the daily goal 100 days in a row'],
+    [3, '🔥', 'Little Flame', 'Meet the daily goal 3 days in a row'],
+    [7, '🌙', 'Week of Moons', 'Meet the daily goal 7 days in a row'],
+    [14, '🌟', 'Steadfast Heart', 'Meet the daily goal 14 days in a row'],
+    [30, '🌋', 'Undying Fire', 'Meet the daily goal 30 days in a row'],
+    [100, '🐲', 'Hundred-Day Dragon', 'Meet the daily goal 100 days in a row'],
   ]),
   ...tiers('time', (c) => c.timeMs / 3_600_000, [
-    [1, '⏳', '第一个小时', 'First Hour', '累计练习 1 小时', 'Practice 1 hour in total'],
-    [5, '🕯️', '烛光夜读', 'Candlelight Study', '累计练习 5 小时', 'Practice 5 hours in total'],
-    [10, '📚', '图书馆常客', 'Library Regular', '累计练习 10 小时', 'Practice 10 hours in total'],
-    [24, '🌍', '环游 Pyrrhia', 'Around Pyrrhia', '累计练习 24 小时', 'Practice 24 hours in total'],
-    [50, '🗺️', '远航 Pantala', 'Voyage to Pantala', '累计练习 50 小时', 'Practice 50 hours in total'],
+    [1, '⏳', 'First Hour', 'Practice 1 hour in total'],
+    [5, '🕯️', 'Candlelight Study', 'Practice 5 hours in total'],
+    [10, '📚', 'Library Regular', 'Practice 10 hours in total'],
+    [24, '🌍', 'Around Pyrrhia', 'Practice 24 hours in total'],
+    [50, '🗺️', 'Voyage to Pantala', 'Practice 50 hours in total'],
   ]),
   ...tiers('stars', (c) => c.fiveStarRounds, [
-    [1, '⭐', '第一个五星', 'First Five Stars', '有一轮拿到五颗星', 'Get five stars in a round'],
-    [10, '✨', '星光熠熠', 'Starry Night', '10 轮拿到五颗星', 'Five stars in 10 rounds'],
-    [50, '🌌', '满天星辰', 'Sky Full of Stars', '50 轮拿到五颗星', 'Five stars in 50 rounds'],
+    [1, '⭐', 'First Five Stars', 'Get five stars in a round'],
+    [10, '✨', 'Starry Night', 'Five stars in 10 rounds'],
+    [50, '🌌', 'Sky Full of Stars', 'Five stars in 50 rounds'],
   ]),
   {
     id: 'stars-rainbow',
     group: 'stars',
     hidden: true,
     icon: '🌈',
-    name: { zh: '彩虹龙', en: 'Rainbow Dragon' },
-    desc: { zh: '有一轮拿到隐藏的彩虹星', en: 'Earn the hidden rainbow star in a round' },
+    name: 'Rainbow Dragon',
+    desc: 'Earn the hidden rainbow star in a round',
     progress: (c) => ratio(c.rainbowRounds, 1),
   },
   // One per level-up, named after the level (see `levels` in i18n.ts).
   ...tiers('level', (c) => c.level, [
-    [2, '⌨️', '键盘新手', 'Key Rookie', '升到 Lv.2', 'Reach level 2'],
-    [3, '🧭', '字母探险家', 'Letter Explorer', '升到 Lv.3', 'Reach level 3'],
-    [4, '⚔️', '单词小勇士', 'Word Warrior', '升到 Lv.4', 'Reach level 4'],
-    [5, '🛡️', '键盘骑士', 'Key Knight', '升到 Lv.5', 'Reach level 5'],
-    [6, '🌟', '速度小明星', 'Rising Star', '升到 Lv.6', 'Reach level 6'],
-    [7, '🦸', '打字飞侠', 'Flying Fingers', '升到 Lv.7', 'Reach level 7'],
-    [8, '🪄', '键盘魔法师', 'Keyboard Wizard', '升到 Lv.8', 'Reach level 8'],
-    [9, '⚡', '闪电手指', 'Lightning Hands', '升到 Lv.9', 'Reach level 9'],
-    [10, '🥋', '打字大侠', 'Typing Hero', '升到 Lv.10', 'Reach level 10'],
-    [11, '🎖️', '键盘大师', 'Key Master', '升到 Lv.11', 'Reach level 11'],
-    [12, '🏅', '打字宗师', 'Grand Master', '升到 Lv.12', 'Reach level 12'],
-    [13, '🏆', '键盘传奇', 'Keyboard Legend', '升到 Lv.13', 'Reach level 13'],
-    [14, '🚀', '光速打字王', 'Light-Speed Typist', '升到 Lv.14', 'Reach level 14'],
-    [15, '🔱', '打字之神', 'Typing Titan', '升到 Lv.15', 'Reach level 15'],
-    [16, '🪐', '宇宙第一打字王', 'Galactic Champion', '升到 Lv.16', 'Reach level 16'],
+    [2, '⌨️', 'Key Rookie', 'Reach level 2'],
+    [3, '🧭', 'Letter Explorer', 'Reach level 3'],
+    [4, '⚔️', 'Word Warrior', 'Reach level 4'],
+    [5, '🛡️', 'Key Knight', 'Reach level 5'],
+    [6, '🌟', 'Rising Star', 'Reach level 6'],
+    [7, '🦸', 'Flying Fingers', 'Reach level 7'],
+    [8, '🪄', 'Keyboard Wizard', 'Reach level 8'],
+    [9, '⚡', 'Lightning Hands', 'Reach level 9'],
+    [10, '🥋', 'Typing Hero', 'Reach level 10'],
+    [11, '🎖️', 'Key Master', 'Reach level 11'],
+    [12, '🏅', 'Grand Master', 'Reach level 12'],
+    [13, '🏆', 'Keyboard Legend', 'Reach level 13'],
+    [14, '🚀', 'Light-Speed Typist', 'Reach level 14'],
+    [15, '🔱', 'Typing Titan', 'Reach level 15'],
+    [16, '🪐', 'Galactic Champion', 'Reach level 16'],
   ]),
   ...tiers('keys', (c) => c.maxUnits, [
-    [LOWER_UNITS, '🔤', '小写字母全掌握', 'All Lowercase', '解锁全部 26 个小写字母', 'Unlock all 26 lowercase letters'],
-    [CAPITAL_UNITS, '🔠', '大写字母全掌握', 'All Capitals', '解锁全部大写字母', 'Unlock all capital letters'],
-    [UNITS.length, '🎓', '玉山毕业生', 'Jade Mountain Graduate', '解锁全部按键（含标点）', 'Unlock every key, punctuation too'],
+    [LOWER_UNITS, '🔤', 'All Lowercase', 'Unlock all 26 lowercase letters'],
+    [CAPITAL_UNITS, '🔠', 'All Capitals', 'Unlock all capital letters'],
+    [UNITS.length, '🎓', 'Jade Mountain Graduate', 'Unlock every key, punctuation too'],
   ]),
 ]
 

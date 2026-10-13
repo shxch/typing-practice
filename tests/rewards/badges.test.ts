@@ -9,10 +9,10 @@ const earned = (list: ReturnType<typeof computeBadges>) => list.filter((b) => b.
 const get = (list: ReturnType<typeof computeBadges>, id: string) => list.find((b) => b.badge.id === id)!
 
 describe('badge list', () => {
-  it('ids are unique and every badge has both languages and an icon', () => {
+  it('ids are unique and every badge has a name, a description and an icon', () => {
     expect(new Set(BADGES.map((b) => b.id)).size).toBe(BADGES.length)
     for (const b of BADGES) {
-      expect(b.name.zh && b.name.en && b.desc.zh && b.desc.en && b.icon).toBeTruthy()
+      expect(b.name && b.desc && b.icon).toBeTruthy()
     }
   })
 

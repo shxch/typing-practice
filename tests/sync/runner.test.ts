@@ -99,13 +99,10 @@ describe('syncNow', () => {
     expect(useApp.getState().status).toBe('ok')
   })
 
-  it('reports token problems in the current language', async () => {
+  it('reports token problems', async () => {
     vi.stubGlobal('fetch', fakeGitHub({ status: 401 }).fetchFn)
     await syncNow()
     expect(useApp.getState().status).toBe('error')
-    expect(useApp.getState().statusMessage).toBe('Token 无效或已过期')
-    useApp.getState().updateSettings({ lang: 'en' })
-    await syncNow()
     expect(useApp.getState().statusMessage).toBe('Token is invalid or expired')
   })
 

@@ -68,12 +68,12 @@ export async function flushWallpaperOps(client: GitHubClient): Promise<void> {
     } else if (op.op === 'put') {
       const [full, thumb] = await Promise.all([idbGet(op.id), idbGet(thumbKey(op.id))])
       if (full && thumb) {
-        await client.putBlob(fullPath(op.id), full, `壁纸：添加 ${op.id}`)
-        await client.putBlob(thumbPath(op.id), thumb, `壁纸：添加 ${op.id} 缩略图`)
+        await client.putBlob(fullPath(op.id), full, `wallpaper: add ${op.id}`)
+        await client.putBlob(thumbPath(op.id), thumb, `wallpaper: add ${op.id} thumbnail`)
       }
     } else {
-      await client.deleteFile(fullPath(op.id), `壁纸：删除 ${op.id}`)
-      await client.deleteFile(thumbPath(op.id), `壁纸：删除 ${op.id} 缩略图`)
+      await client.deleteFile(fullPath(op.id), `wallpaper: delete ${op.id}`)
+      await client.deleteFile(thumbPath(op.id), `wallpaper: delete ${op.id} thumbnail`)
     }
     useApp.setState((s) => ({ wallpaperOps: s.wallpaperOps.filter((o) => o !== op) }))
   }

@@ -51,8 +51,8 @@ interface AppState {
 export function guessDevice(): string {
   const ua = typeof navigator === 'undefined' ? '' : navigator.userAgent
   if (/Mac/.test(ua)) return 'MacBook'
-  if (/Windows/.test(ua)) return '家里电脑'
-  return '设备'
+  if (/Windows/.test(ua)) return 'Home PC'
+  return 'Device'
 }
 
 const SESSIONS_KEY = 'app:sessions'

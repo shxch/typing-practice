@@ -54,27 +54,14 @@ describe.each([
   ['empty', () => ({})],
   ['large', bigLog],
 ])('every page with %s data', (_, data) => {
-  for (const lang of ['zh', 'en'] as const) {
-    it(`renders in ${lang} without broken values`, () => {
-      useApp.setState({ sessions: data() })
-      useApp.getState().updateSettings({ lang })
-      render(<App />)
-      noBadText()
-      for (const tab of lang === 'zh' ? ['统计', '徽章', '设置', '练习'] : ['Stats', 'Badges', 'Settings', 'Practice']) {
-        act(() => fireEvent.click(screen.getAllByRole('button', { name: tab })[0]))
-        noBadText()
-      }
-    })
-  }
-})
-
-describe('language toggle', () => {
-  it('switches the whole app', () => {
+  it('renders without broken values', () => {
+    useApp.setState({ sessions: data() })
     render(<App />)
-    expect(document.title).toBe('飞龙打字')
-    act(() => fireEvent.click(screen.getByTitle('Switch to English')))
-    expect(useApp.getState().shared.settings.lang).toBe('en')
-    expect(document.documentElement.lang).toBe('en')
+    noBadText()
+    for (const tab of ['Stats', 'Badges', 'Settings', 'Practice']) {
+      act(() => fireEvent.click(screen.getAllByRole('button', { name: tab })[0]))
+      noBadText()
+    }
   })
 })
 
@@ -94,7 +81,7 @@ describe('ResultCard', () => {
           stars: 2,
           goalJustDone: true,
           streak: 3,
-          levelUp: '键盘新手',
+          levelUp: 'Key Rookie',
           badges: [BADGES[0]],
         }}
         onNext={onNext}
@@ -104,8 +91,8 @@ describe('ResultCard', () => {
     expect(screen.getByText('23')).toBeTruthy()
     expect(screen.getByText('97%')).toBeTruthy()
     expect(screen.getByText('812')).toBeTruthy()
-    expect(screen.getByText('🏆 新的最高分！')).toBeTruthy()
-    expect(screen.getByText(BADGES[0].name.zh)).toBeTruthy()
+    expect(screen.getByText('🏆 New top score!')).toBeTruthy()
+    expect(screen.getByText(BADGES[0].name)).toBeTruthy()
     noBadText()
     fireEvent.click(screen.getByRole('button'))
     expect(onNext).toHaveBeenCalled()

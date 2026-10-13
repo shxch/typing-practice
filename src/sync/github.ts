@@ -111,7 +111,7 @@ export class GitHubClient {
         ...(sha ? { sha } : {}),
       }),
     })
-    if (res.status === 404) throw new GitHubError(404, '找不到数据仓库，请检查用户名、仓库名和 token 权限')
+    if (res.status === 404) throw new GitHubError(404, 'Data repo not found — check the user name, repo name and token access')
     const body = await res.json()
     return body.content.sha
   }
@@ -157,7 +157,7 @@ export class GitHubClient {
       headers: { Authorization: `Bearer ${this.cfg.token}`, Accept: 'application/vnd.github+json' },
     })
     if (!res.ok) {
-      throw new GitHubError(res.status, res.status === 404 ? '找不到仓库或 token 无权访问' : (await errorMessage(res)) || `HTTP ${res.status}`)
+      throw new GitHubError(res.status, res.status === 404 ? 'Repo not found, or the token has no access to it' : (await errorMessage(res)) || `HTTP ${res.status}`)
     }
   }
 }

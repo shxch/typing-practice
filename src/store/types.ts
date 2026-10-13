@@ -36,7 +36,6 @@ export interface SyncedSettings {
   manualUnits: number | null
   lessonWords: number
   errorMode: ErrorMode
-  lang: Lang
   /** Wallpaper id (see content/wallpapers.ts). */
   wallpaper: string
   /** Rounds to finish in a day for it to count toward the streak. */
@@ -53,8 +52,6 @@ export interface CustomWallpaper {
   addedAt: number
 }
 
-export type Lang = 'zh' | 'en'
-
 export const DEFAULT_SETTINGS: SyncedSettings = {
   targetWpm: 25,
   targetAccuracy: 0.95,
@@ -62,7 +59,6 @@ export const DEFAULT_SETTINGS: SyncedSettings = {
   manualUnits: null,
   lessonWords: 20,
   errorMode: 'stop',
-  lang: 'zh',
   wallpaper: 'gradient-lavender',
   dailyGoalRounds: 15,
   customWallpapers: [],

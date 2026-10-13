@@ -108,27 +108,6 @@ export function Settings() {
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
       <Section title={t.secLook}>
-        <Field label={t.language}>
-          <div className="flex gap-2">
-            {(
-              [
-                ['zh', '中文'],
-                ['en', 'English'],
-              ] as const
-            ).map(([v, text]) => (
-              <button
-                key={v}
-                onClick={() => updateSettings({ lang: v })}
-                className={`px-4 py-1.5 rounded-lg border ${
-                  settings.lang === v ? 'bg-theme-600 border-theme-600 text-white' : 'bg-white border-slate-300 text-slate-600'
-                }`}
-              >
-                {text}
-              </button>
-            ))}
-          </div>
-        </Field>
-
         <div className="space-y-2">
           <div className="text-slate-600">{t.wallpaper}</div>
           <WallpaperPicker value={settings.wallpaper} onChange={(id) => updateSettings({ wallpaper: id })} />

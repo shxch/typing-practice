@@ -59,7 +59,7 @@ export async function syncOnce(client: GitHubClient, input: SyncInput): Promise<
         path,
         { sessions: merged },
         remote?.sha ?? null,
-        `${input.device}: 练习记录 ${month}`,
+        `${input.device}: practice log ${month}`,
       )
     })
     pushedIds.push(...Object.keys(local))
@@ -76,7 +76,7 @@ export async function syncOnce(client: GitHubClient, input: SyncInput): Promise<
       shared.inProgressUpdatedAt > remote.data.inProgressUpdatedAt
     if (remote) shas[STATE_PATH] = remote.sha
     if (newer) {
-      shas[STATE_PATH] = await client.putJson(STATE_PATH, shared, remote?.sha ?? null, `${input.device}: 更新进度`)
+      shas[STATE_PATH] = await client.putJson(STATE_PATH, shared, remote?.sha ?? null, `${input.device}: update progress`)
     }
   })
 

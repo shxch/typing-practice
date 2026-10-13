@@ -13,7 +13,6 @@ vi.mock('../../src/sync/runner', () => ({ syncNow: vi.fn(async () => {}), descri
 beforeEach(() => {
   installDomStubs()
   resetStore()
-  useApp.getState().updateSettings({ lang: 'en' })
 })
 afterEach(cleanup)
 

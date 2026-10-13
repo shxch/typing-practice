@@ -2,7 +2,6 @@ import { msToWpm, shownPercent, shownWpm } from '../engine/typing'
 import { useT } from '../i18n'
 import type { Badge } from '../rewards/badges'
 import { BadgeIcon } from './BadgeIcon'
-import { useApp } from '../store/app'
 import type { Stars } from '../rewards/rewards'
 
 export interface RoundResult {
@@ -33,7 +32,6 @@ function RainbowStar() {
 
 export function ResultCard({ result, onNext }: { result: RoundResult; onNext: () => void }) {
   const t = useT()
-  const lang = useApp((s) => s.shared.settings.lang)
   const show = (ch: string) => (ch === ' ' ? t.space : ch)
   return (
     <div className="rounded-2xl bg-white/85 backdrop-blur shadow-lg p-8 text-center space-y-6">
@@ -74,13 +72,13 @@ export function ResultCard({ result, onNext }: { result: RoundResult; onNext: ()
                 style={{ animationDelay: `${300 + i * 150}ms` }}
               >
                 <BadgeIcon badge={b} size={60} />
-                <span className="text-sm font-semibold">{b.name[lang]}</span>
+                <span className="text-sm font-semibold">{b.name}</span>
                 <div
                   role="tooltip"
                   className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 w-48 -translate-x-1/2 translate-y-1 rounded-xl bg-white px-3 py-2 text-left text-slate-700 shadow-xl ring-1 ring-amber-200 opacity-0 transition duration-150 group-hover:opacity-100 group-hover:translate-y-0 group-focus:opacity-100 group-focus:translate-y-0"
                 >
                   <div className="text-[11px] font-semibold uppercase tracking-wide text-amber-600">{t.badgeWhy}</div>
-                  <div className="text-sm leading-snug">{b.desc[lang]}</div>
+                  <div className="text-sm leading-snug">{b.desc}</div>
                   <span className="absolute left-1/2 top-full -translate-x-1/2 border-[6px] border-transparent border-t-white" />
                 </div>
               </div>

@@ -10,7 +10,6 @@ const GROUPS: BadgeGroup[] = ['rounds', 'speed', 'score', 'accuracy', 'streak', 
 /** The badge wall: earned badges in color with their date, the rest as grey mystery badges. */
 export function Badges() {
   const t = useT()
-  const lang = useApp((s) => s.shared.settings.lang)
   const sessions = useApp((s) => s.sessions)
   const settings = useApp((s) => s.shared.settings)
   const list = useMemo(() => Object.values(sessions), [sessions])
@@ -37,7 +36,7 @@ export function Badges() {
             {shown
               .filter((s) => s.badge.group === g)
               .map((state) => (
-                <BadgeCard key={state.badge.id} state={state} lang={lang} />
+                <BadgeCard key={state.badge.id} state={state} />
               ))}
           </div>
         </section>
@@ -46,23 +45,23 @@ export function Badges() {
   )
 }
 
-function BadgeCard({ state, lang }: { state: BadgeState; lang: 'zh' | 'en' }) {
+function BadgeCard({ state }: { state: BadgeState }) {
   const { badge, earnedAt } = state
   const got = earnedAt !== null
 
   // A badge keeps its picture, name, how to earn it and how close it is secret until it is earned.
   return (
     <div
-      title={got ? badge.desc[lang] : undefined}
+      title={got ? badge.desc : undefined}
       className={`rounded-xl border p-3 text-center flex flex-col items-center gap-1 ${
         got ? 'bg-gradient-to-b from-theme-50 to-white border-theme-200 shadow-sm' : 'bg-slate-50 border-slate-200'
       }`}
     >
       <BadgeIcon badge={badge} dim={!got} secret={!got} />
-      <div className={`font-semibold text-sm ${got ? 'text-slate-800' : 'text-slate-400'}`}>{got ? badge.name[lang] : '???'}</div>
-      {got && <div className="text-[11px] leading-snug text-slate-500">{badge.desc[lang]}</div>}
+      <div className={`font-semibold text-sm ${got ? 'text-slate-800' : 'text-slate-400'}`}>{got ? badge.name : '???'}</div>
+      {got && <div className="text-[11px] leading-snug text-slate-500">{badge.desc}</div>}
       {got && (
-        <div className="text-[11px] text-theme-700 mt-auto">{new Date(earnedAt).toLocaleDateString(lang === 'zh' ? 'zh-CN' : 'en')}</div>
+        <div className="text-[11px] text-theme-700 mt-auto">{new Date(earnedAt).toLocaleDateString('en')}</div>
       )}
     </div>
   )

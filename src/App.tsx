@@ -36,19 +36,13 @@ function useAutoSync() {
 
 export default function App() {
   const [page, setPage] = useState<Page>('practice')
-  const lang = useApp((s) => s.shared.settings.lang)
   const wallpaperId = useApp((s) => s.shared.settings.wallpaper)
   const sound = useApp((s) => s.config.sound)
   const volume = useApp((s) => s.config.volume)
-  const updateSettings = useApp((s) => s.updateSettings)
   const t = useT()
   useAutoSync()
 
   useEffect(() => setVolume(sound ? volume : 0), [sound, volume])
-  useEffect(() => {
-    document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en'
-    document.title = t.appTitle
-  }, [lang, t])
 
   const wallpapers = useWallpapers()
   const wallpaper = useDecodedWallpaper(findWallpaper(wallpapers, wallpaperId))
@@ -88,13 +82,6 @@ export default function App() {
             {tab('stats', t.navStats)}
             {tab('badges', t.navBadges)}
             {tab('settings', t.navSettings)}
-            <button
-              onClick={blurAfter(() => updateSettings({ lang: lang === 'zh' ? 'en' : 'zh' }))}
-              title={t.langToggleTitle}
-              className="w-10 py-1.5 rounded-lg font-semibold text-theme-700 border border-theme-200 hover:bg-theme-100"
-            >
-              {t.langToggle}
-            </button>
             <span className="w-2" />
             <SyncBadge />
           </nav>
