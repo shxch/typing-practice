@@ -3,6 +3,7 @@ import 'fake-indexeddb/auto'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from '../../src/App'
+import { BadgeIcon } from '../../src/components/BadgeIcon'
 import { ResultCard } from '../../src/components/ResultCard'
 import { SyncBadge } from '../../src/components/SyncBadge'
 import { UNITS, unitChars } from '../../src/lessons/curriculum'
@@ -108,6 +109,17 @@ describe('ResultCard', () => {
     noBadText()
     fireEvent.click(screen.getByRole('button'))
     expect(onNext).toHaveBeenCalled()
+  })
+})
+
+describe('BadgeIcon', () => {
+  it('shows the emoji until its picture has arrived', () => {
+    const badge = BADGES.find((b) => b.id === 'rounds-1')!
+    const { container } = render(<BadgeIcon badge={badge} />)
+    expect(screen.getByText(badge.icon)).toBeTruthy()
+    for (const img of container.querySelectorAll('img')) fireEvent.load(img)
+    expect(screen.queryByText(badge.icon)).toBeNull()
+    expect(container.querySelector('.opacity-0')).toBeNull()
   })
 })
 

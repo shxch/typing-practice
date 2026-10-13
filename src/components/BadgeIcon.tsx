@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { Badge } from '../rewards/badges'
 
 /** Built-in badge pictures: src/assets/badges/<badge id>.webp */
@@ -6,6 +7,15 @@ const BUILT_IN: Record<string, string> = Object.fromEntries(
     import.meta.glob('../assets/badges/*.{webp,png,jpg,jpeg,avif}', { eager: true, query: '?url', import: 'default' }) as Record<string, string>,
   ).map(([path, url]) => [path.replace(/^.*\//, '').replace(/\.[^.]+$/, ''), url]),
 )
+
+/** Fetch every badge picture while the browser is idle, so a badge never has to wait for its picture. */
+if (typeof window !== 'undefined' && typeof Image !== 'undefined') {
+  const preload = () => {
+    for (const url of Object.values(BUILT_IN)) new Image().src = url
+  }
+  if ('requestIdleCallback' in window) window.requestIdleCallback(preload, { timeout: 5000 })
+  else setTimeout(preload, 2000)
+}
 
 /**
  * Where each picture's dragon head is, so the round frame keeps it in view:
@@ -93,11 +103,15 @@ const SILVER = 'conic-gradient(from 200deg, #e2e8f0, #94a3b8, #f8fafc, #64748b, 
 
 /**
  * A badge as a round medallion: a gold rim (silver while not yet earned) around its picture from
- * src/assets/badges, or its emoji icon if there is none. A secret badge shows only a question mark.
+ * src/assets/badges, or its emoji icon if there is none (or while the picture is still on its way).
+ * A secret badge shows only a question mark.
  */
 export function BadgeIcon({ badge, size = 56, dim = false, secret = false }: { badge: Badge; size?: number; dim?: boolean; secret?: boolean }) {
   const rim = Math.max(3, Math.round(size * 0.07))
   const src = secret ? undefined : BUILT_IN[badge.id]
+  // The picture that has arrived; until it has (or if it never does) the emoji stands in.
+  const [loaded, setLoaded] = useState<string>()
+  const ready = src !== undefined && loaded === src
   return (
     <span
       className={`relative inline-flex shrink-0 rounded-full ${dim ? 'opacity-60' : 'shadow-[0_2px_6px_rgba(146,64,14,0.45)]'}`}
@@ -108,9 +122,12 @@ export function BadgeIcon({ badge, size = 56, dim = false, secret = false }: { b
           dim ? 'grayscale bg-slate-100' : 'bg-gradient-to-b from-amber-50 to-orange-100'
         }`}
       >
-        {src ? (
-          <Picture id={badge.id} src={src} blur={size * 0.05} />
-        ) : (
+        {src && (
+          <span className={`absolute inset-0 transition-opacity duration-200 ${ready ? '' : 'opacity-0'}`}>
+            <Picture id={badge.id} src={src} blur={size * 0.05} onLoad={() => setLoaded(src)} />
+          </span>
+        )}
+        {!ready && (
           <span className={`leading-none ${secret ? 'font-bold text-slate-400' : ''}`} style={{ fontSize: (size - rim * 2) * 0.62 }}>
             {secret ? '?' : badge.icon}
           </span>
@@ -121,9 +138,9 @@ export function BadgeIcon({ badge, size = 56, dim = false, secret = false }: { b
   )
 }
 
-function Picture({ id, src, blur }: { id: string; src: string; blur: number }) {
+function Picture({ id, src, blur, onLoad }: { id: string; src: string; blur: number; onLoad: () => void }) {
   const head = HEADS[id]
-  if (!head) return <img src={src} alt="" draggable={false} className="w-full h-full object-cover" />
+  if (!head) return <img src={src} alt="" draggable={false} decoding="async" onLoad={onLoad} className="w-full h-full object-cover" />
   const place = placePicture(head)
   const mask = edgeMask(place)
   return (
@@ -135,6 +152,8 @@ function Picture({ id, src, blur }: { id: string; src: string; blur: number }) {
         src={src}
         alt=""
         draggable={false}
+        decoding="async"
+        onLoad={onLoad}
         className="absolute max-w-none"
         style={{ left: `${place.left}%`, top: `${place.top}%`, width: `${place.w}%`, height: `${place.h}%`, ...mask }}
       />
