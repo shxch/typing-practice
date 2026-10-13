@@ -15,6 +15,7 @@ interface Ctx {
   rounds: number
   timeMs: number
   bestWpm: number
+  /** Best score since SCORE_BADGES_FROM. */
   bestScore: number
   perfectRounds: number
   fiveStarRounds: number
@@ -45,6 +46,12 @@ export interface Badge {
   /** Progress toward the badge, 0..1 (1 = earned). */
   progress: (c: Ctx) => number
 }
+
+/**
+ * The top-score badges arrived after plenty of rounds had been played. Only rounds started from
+ * here on count toward them, so they are handed out when a score is next beaten, not all at once.
+ */
+export const SCORE_BADGES_FROM = Date.UTC(2026, 9, 13, 13)
 
 const ratio = (v: number, goal: number) => Math.min(1, v / goal)
 
@@ -213,7 +220,7 @@ export function computeBadges(sessions: Session[], r: BadgeRules, currentUnits =
     c.rounds++
     c.timeMs += s.durationMs
     c.bestWpm = Math.max(c.bestWpm, s.wpm)
-    c.bestScore = Math.max(c.bestScore, score(s))
+    if (s.startedAt >= SCORE_BADGES_FROM) c.bestScore = Math.max(c.bestScore, score(s))
     if (s.accuracy >= 0.9999) c.perfectRounds++
     if ((stars.get(s.id) ?? 0) >= 5) c.fiveStarRounds++
     if (stars.get(s.id) === 6) c.rainbowRounds++

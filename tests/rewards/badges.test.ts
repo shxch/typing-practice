@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { UNITS } from '../../src/lessons/curriculum'
-import { BADGES, computeBadges, newBadges } from '../../src/rewards/badges'
+import { BADGES, SCORE_BADGES_FROM, computeBadges, newBadges } from '../../src/rewards/badges'
 import { ACCURACY_RULES_FROM } from '../../src/rewards/rewards'
 import { dayAt, makeSession, statsFor } from '../helpers/session'
 
@@ -85,11 +85,16 @@ describe('earning', () => {
 
   it('top-score badges follow the best round score', () => {
     // 20 WPM = 100 chars a minute × 10 different keys × (100 chars ÷ 50), no mistakes: 2000.
-    const s = makeSession({ wpm: 20, chars: 100, keyStats: statsFor('abcdefghij', 200) })
+    const s = makeSession({ wpm: 20, chars: 100, keyStats: statsFor('abcdefghij', 200), startedAt: SCORE_BADGES_FROM })
     const ids = earned(computeBadges([s], R))
     expect(ids).toEqual(expect.arrayContaining(['score-500', 'score-1000', 'score-2000']))
     expect(ids).not.toContain('score-3000')
     expect(get(computeBadges([s], R), 'score-3000').progress).toBeCloseTo(2 / 3)
+  })
+
+  it('rounds from before the top-score badges existed do not earn them', () => {
+    const old = makeSession({ wpm: 20, chars: 100, keyStats: statsFor('abcdefghij', 200), startedAt: SCORE_BADGES_FROM - 1 })
+    expect(earned(computeBadges([old], R)).filter((id) => id.startsWith('score-'))).toEqual([])
   })
 
   it('a badge for every level reached', () => {
