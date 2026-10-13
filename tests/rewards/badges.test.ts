@@ -87,9 +87,9 @@ describe('earning', () => {
     // 20 WPM = 100 chars a minute × 10 different keys × (100 chars ÷ 50), no mistakes: 2000.
     const s = makeSession({ wpm: 20, chars: 100, keyStats: statsFor('abcdefghij', 200) })
     const ids = earned(computeBadges([s], R))
-    expect(ids).toEqual(expect.arrayContaining(['score-500', 'score-1000']))
-    expect(ids).not.toContain('score-2500')
-    expect(get(computeBadges([s], R), 'score-2500').progress).toBeCloseTo(0.8)
+    expect(ids).toEqual(expect.arrayContaining(['score-500', 'score-1000', 'score-2000']))
+    expect(ids).not.toContain('score-3000')
+    expect(get(computeBadges([s], R), 'score-3000').progress).toBeCloseTo(2 / 3)
   })
 
   it('a badge for every level reached', () => {

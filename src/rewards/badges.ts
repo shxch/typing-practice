@@ -83,14 +83,23 @@ export const BADGES: Badge[] = [
     [60, '🦎', 'RainWing 之速', 'RainWing Speed', '单轮速度达到 60 WPM', 'Reach 60 WPM in a round'],
     [70, '☁️', 'SkyWing 之速', 'SkyWing Speed', '单轮速度达到 70 WPM', 'Reach 70 WPM in a round'],
   ]),
-  // The top score: fast, long, varied and clean all at once (see `score` in lessons/stats.ts).
+  // The top score (see `score` in lessons/stats.ts). A clean round scores about 10 × WPM × the
+  // number of different keys in it, so the top score climbs as keys unlock: about 3,500 with the
+  // first ten keys, 8,000-10,000 with every lowercase letter, 20,000 with capitals and punctuation
+  // at 50 WPM. Past the early tiers each step is roughly two or three more keys.
   ...tiers('score', (c) => c.bestScore, [
     [500, '🪙', '第一枚金币', 'First Coin', '最高分达到 500', 'Reach a top score of 500'],
     [1000, '💰', '小小宝藏', 'Small Hoard', '最高分达到 1000', 'Reach a top score of 1,000'],
-    [2500, '🧰', '宝箱满满', 'Treasure Chest', '最高分达到 2500', 'Reach a top score of 2,500'],
-    [5000, '🏺', '龙之宝库', "Dragon's Hoard", '最高分达到 5000', 'Reach a top score of 5,000'],
+    [2000, '🧰', '宝箱满满', 'Treasure Chest', '最高分达到 2000', 'Reach a top score of 2,000'],
+    [3000, '🏺', '龙之宝库', "Dragon's Hoard", '最高分达到 3000', 'Reach a top score of 3,000'],
+    [4000, '🔷', '蓝宝石', 'Sapphire', '最高分达到 4000', 'Reach a top score of 4,000'],
+    [5000, '🟢', '祖母绿', 'Emerald', '最高分达到 5000', 'Reach a top score of 5,000'],
+    [6500, '♦️', '红宝石', 'Ruby', '最高分达到 6500', 'Reach a top score of 6,500'],
+    [8000, '💎', '钻石', 'Diamond', '最高分达到 8000', 'Reach a top score of 8,000'],
     [10000, '👁️', '缟玛瑙之眼', 'Eye of Onyx', '最高分达到 10000', 'Reach a top score of 10,000'],
-    [25000, '🏆', '女王的宝藏', "Queen's Treasure", '最高分达到 25000', 'Reach a top score of 25,000'],
+    [12500, '🌙', '访梦石', 'Dreamvisitor', '最高分达到 12500', 'Reach a top score of 12,500'],
+    [15000, '☄️', '天火石', 'Skyfire', '最高分达到 15000', 'Reach a top score of 15,000'],
+    [20000, '🏆', '女王的宝藏', "Queen's Treasure", '最高分达到 20000', 'Reach a top score of 20,000'],
   ]),
   ...tiers('accuracy', (c) => c.perfectRounds, [
     [1, '💎', '零失误', 'Flawless', '有一轮 100% 全对', 'A round with 100% accuracy'],
