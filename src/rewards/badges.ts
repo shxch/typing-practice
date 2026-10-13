@@ -30,7 +30,6 @@ interface Ctx {
   bestDayStreak: number
   goalDays: number
   maxUnits: number
-  devices: number
 }
 
 export type BadgeGroup = 'rounds' | 'speed' | 'score' | 'accuracy' | 'streak' | 'time' | 'stars' | 'level' | 'keys'
@@ -170,9 +169,6 @@ export const BADGES: Badge[] = [
     [CAPITAL_UNITS, '🔠', '大写字母全掌握', 'All Capitals', '解锁全部大写字母', 'Unlock all capital letters'],
     [UNITS.length, '🎓', '玉山毕业生', 'Jade Mountain Graduate', '解锁全部按键（含标点）', 'Unlock every key, punctuation too'],
   ]),
-  ...tiers('keys', (c) => c.devices, [
-    [2, '🏡', '两处龙穴', 'Two Dens', '在两台设备上练习过', 'Practice on two devices'],
-  ]),
 ]
 
 export interface BadgeState {
@@ -205,12 +201,10 @@ export function computeBadges(sessions: Session[], r: BadgeRules, currentUnits =
     bestDayStreak: 0,
     goalDays: 0,
     maxUnits: 0,
-    devices: 0,
   }
   const earned = new Map<string, number>()
   const perDay = new Map<string, number>()
   const goalMet = new Set<string>()
-  const devices = new Set<string>()
 
   const check = (at: number) => {
     for (const b of BADGES) if (!earned.has(b.id) && b.progress(c) >= 1) earned.set(b.id, at)
@@ -230,8 +224,6 @@ export function computeBadges(sessions: Session[], r: BadgeRules, currentUnits =
     c.bestAccurateRun = Math.max(c.bestAccurateRun, c.accurateRun)
     // Only what practice unlocked counts; a manual jump on the course slider doesn't.
     c.maxUnits = Math.max(c.maxUnits, s.earnedUnits ?? s.units)
-    devices.add(s.device)
-    c.devices = devices.size
 
     const day = dayKey(s.startedAt)
     perDay.set(day, (perDay.get(day) ?? 0) + 1)

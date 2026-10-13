@@ -68,11 +68,6 @@ describe('earning', () => {
     expect(get(computeBadges(list, R), 'streak-1').earnedAt).toBe(list[2].endedAt)
   })
 
-  it('two devices', () => {
-    const list = [makeSession({ device: 'mac' }), makeSession({ device: 'tv' })]
-    expect(get(computeBadges(list, R), 'keys-2').earnedAt).not.toBeNull()
-  })
-
   it('the rainbow badge is hidden and needs the sixth star', () => {
     const list = (wpm: number) => [makeSession({ wpm, accuracy: 1, startedAt: 1 })]
     expect(get(computeBadges(list(30), R), 'stars-rainbow').earnedAt).toBeNull()
