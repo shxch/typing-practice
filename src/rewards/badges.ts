@@ -2,7 +2,7 @@
 // (replayed in time order), so every device agrees and nothing extra needs syncing.
 
 import { UNITS } from '../lessons/curriculum'
-import { dayKey } from '../lessons/stats'
+import { dayKey, score } from '../lessons/stats'
 import type { Session } from '../store/types'
 import { inPlayOrder, levelOf, starsByRound, type StarRules } from './rewards'
 
@@ -15,6 +15,7 @@ interface Ctx {
   rounds: number
   timeMs: number
   bestWpm: number
+  bestScore: number
   perfectRounds: number
   fiveStarRounds: number
   rainbowRounds: number
@@ -31,7 +32,7 @@ interface Ctx {
   devices: number
 }
 
-export type BadgeGroup = 'rounds' | 'speed' | 'accuracy' | 'streak' | 'time' | 'stars' | 'level' | 'keys'
+export type BadgeGroup = 'rounds' | 'speed' | 'score' | 'accuracy' | 'streak' | 'time' | 'stars' | 'level' | 'keys'
 
 export interface Badge {
   id: string
@@ -81,6 +82,15 @@ export const BADGES: Badge[] = [
     [50, '🏜️', 'SandWing 之速', 'SandWing Speed', '单轮速度达到 50 WPM', 'Reach 50 WPM in a round'],
     [60, '🦎', 'RainWing 之速', 'RainWing Speed', '单轮速度达到 60 WPM', 'Reach 60 WPM in a round'],
     [70, '☁️', 'SkyWing 之速', 'SkyWing Speed', '单轮速度达到 70 WPM', 'Reach 70 WPM in a round'],
+  ]),
+  // The top score: fast, long, varied and clean all at once (see `score` in lessons/stats.ts).
+  ...tiers('score', (c) => c.bestScore, [
+    [500, '🪙', '第一枚金币', 'First Coin', '最高分达到 500', 'Reach a top score of 500'],
+    [1000, '💰', '小小宝藏', 'Small Hoard', '最高分达到 1000', 'Reach a top score of 1,000'],
+    [2500, '🧰', '宝箱满满', 'Treasure Chest', '最高分达到 2500', 'Reach a top score of 2,500'],
+    [5000, '🏺', '龙之宝库', "Dragon's Hoard", '最高分达到 5000', 'Reach a top score of 5,000'],
+    [10000, '👁️', '缟玛瑙之眼', 'Eye of Onyx', '最高分达到 10000', 'Reach a top score of 10,000'],
+    [25000, '🏆', '女王的宝藏', "Queen's Treasure", '最高分达到 25000', 'Reach a top score of 25,000'],
   ]),
   ...tiers('accuracy', (c) => c.perfectRounds, [
     [1, '💎', '零失误', 'Flawless', '有一轮 100% 全对', 'A round with 100% accuracy'],
@@ -168,6 +178,7 @@ export function computeBadges(sessions: Session[], r: BadgeRules, currentUnits =
     rounds: 0,
     timeMs: 0,
     bestWpm: 0,
+    bestScore: 0,
     perfectRounds: 0,
     fiveStarRounds: 0,
     rainbowRounds: 0,
@@ -193,6 +204,7 @@ export function computeBadges(sessions: Session[], r: BadgeRules, currentUnits =
     c.rounds++
     c.timeMs += s.durationMs
     c.bestWpm = Math.max(c.bestWpm, s.wpm)
+    c.bestScore = Math.max(c.bestScore, score(s))
     if (s.accuracy >= 0.9999) c.perfectRounds++
     if ((stars.get(s.id) ?? 0) >= 5) c.fiveStarRounds++
     if (stars.get(s.id) === 6) c.rainbowRounds++

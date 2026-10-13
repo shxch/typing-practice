@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { UNITS } from '../../src/lessons/curriculum'
 import { BADGES, computeBadges, newBadges } from '../../src/rewards/badges'
 import { ACCURACY_RULES_FROM } from '../../src/rewards/rewards'
-import { dayAt, makeSession } from '../helpers/session'
+import { dayAt, makeSession, statsFor } from '../helpers/session'
 
 const R = { targetWpm: 25, targetAccuracy: 0.95, dailyGoalRounds: 3 }
 const earned = (list: ReturnType<typeof computeBadges>) => list.filter((b) => b.earnedAt !== null).map((b) => b.badge.id)
@@ -81,6 +81,15 @@ describe('earning', () => {
     // Since the accuracy rules, a clean round at the target speed is enough.
     const clean = [makeSession({ wpm: 25, accuracy: 0.98, startedAt: ACCURACY_RULES_FROM })]
     expect(get(computeBadges(clean, R), 'stars-rainbow').earnedAt).not.toBeNull()
+  })
+
+  it('top-score badges follow the best round score', () => {
+    // 20 WPM = 100 chars a minute × 10 different keys × (100 chars ÷ 50), no mistakes: 2000.
+    const s = makeSession({ wpm: 20, chars: 100, keyStats: statsFor('abcdefghij', 200) })
+    const ids = earned(computeBadges([s], R))
+    expect(ids).toEqual(expect.arrayContaining(['score-500', 'score-1000']))
+    expect(ids).not.toContain('score-2500')
+    expect(get(computeBadges([s], R), 'score-2500').progress).toBeCloseTo(0.8)
   })
 
   it('a badge for every level reached', () => {
