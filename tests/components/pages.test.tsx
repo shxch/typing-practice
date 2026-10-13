@@ -142,4 +142,16 @@ describe('LineChart', () => {
     expect(labels).not.toContain('1.5')
     expect(labels).toContain('1')
   })
+
+  it('starts the x-axis at the first round with data', async () => {
+    const { LineChart } = await import('../../src/components/charts/LineChart')
+    const points = [300, 302, 310].map((lesson) => ({ lesson, value: 20 }))
+    const { container } = render(<LineChart points={points} format={String} tooltip={() => ''} empty="-" ariaLabel="x" />)
+    const xs = [...container.querySelectorAll('circle')].map((c) => Number(c.getAttribute('cx')))
+    // The first point sits on the left edge of the plot, not most of the way across.
+    expect(xs[0]).toBe(34)
+    const labels = [...container.querySelectorAll('text')].map((t) => t.textContent)
+    expect(labels).toEqual(expect.arrayContaining(['300', '310']))
+    expect(labels).not.toContain('100')
+  })
 })

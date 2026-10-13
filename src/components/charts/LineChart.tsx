@@ -40,8 +40,9 @@ export function LineChart({ points: line, target, height = 160, yMax, yTicks: yC
   }
 
   const pts = line
-  const maxX = Math.max(...pts.map((p) => p.lesson), 2)
-  const minX = Math.min(...pts.map((p) => p.lesson), 1)
+  // Span only the rounds that have data: a newly unlocked key starts at its first round, not round 1.
+  const maxX = Math.max(...pts.map((p) => p.lesson))
+  const minX = Math.min(...pts.map((p) => p.lesson))
   const dataMax = Math.max(...pts.map((p) => p.value), target?.value ?? 0)
   const yTicks = yMax !== undefined ? niceTicks(yMax, yCount) : niceTicks(dataMax * 1.1, yCount)
   const top = yTicks[yTicks.length - 1]
@@ -51,7 +52,11 @@ export function LineChart({ points: line, target, height = 160, yMax, yTicks: yC
   const y = (v: number) => M.top + h - (Math.min(v, top) / top) * h
   const path = line.map((p, i) => `${i ? 'L' : 'M'}${x(p.lesson).toFixed(1)},${y(p.value).toFixed(1)}`).join('')
   // Rounds are whole numbers: no "round 1.5" tick when there are only a few.
-  const xTicks = niceTicks(maxX, 5).filter((v) => v >= minX && v <= maxX && Number.isInteger(v))
+  const xStep = Math.max(1, Math.ceil(niceTicks(maxX - minX, 5)[1]))
+  const xTicks: number[] = []
+  for (let v = Math.ceil(minX / xStep) * xStep; v <= maxX; v += xStep) xTicks.push(v)
+  // Too short a span to hold a multiple of the step: label the first round instead.
+  if (xTicks.length === 0) xTicks.push(minX)
 
   const onMove = (e: React.MouseEvent<SVGRectElement>) => {
     const box = e.currentTarget.getBoundingClientRect()
